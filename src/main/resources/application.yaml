@@ -1,0 +1,24 @@
+
+server:
+  # Đổi cổng khi 8080 bận; hoặc chạy: SERVER_PORT=8082 ./mvnw spring-boot:run
+  port: ${SERVER_PORT:8081}
+  servlet:
+    context-path: /study-analysis #url mặc định
+jwt:
+  # HS512: secret must be at least 64 bytes as UTF-8. Override via JWT_SIGNER_KEY.
+  signer-key: ${JWT_SIGNER_KEY:e132b2e9d5c1288627820226f437b37ce680850eccc4736a067ede3cf273f731}
+spring:
+  application:
+    name: study-analysis
+  # FE: classpath:/static/ (copy từ /frontend khi build) + fallback file:./frontend khi dev
+  web:
+    resources:
+      static-locations: classpath:/static/,file:./frontend/
+  datasource: #mng tạo db nhé
+    url: "jdbc:mysql://localhost:3306/identity_service"
+    username: root
+    password: Huynh201200
+  jpa: #tự thay đổi trong db
+    hibernate:
+      ddl-auto: update
+    show-sql: true

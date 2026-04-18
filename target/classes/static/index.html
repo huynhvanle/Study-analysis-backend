@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <base href="/study-analysis/" />
+  <meta name="api-root" content="/study-analysis" />
+  <title>StudyHub — Hệ thống học tập &amp; phân tích</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/app.css" />
+</head>
+<body class="landing-body">
+  <div class="landing">
+    <header class="landing-header">
+      <a href="index.html" class="landing-logo"><span class="landing-logo-mark">📚</span><span>StudyHub</span></a>
+      <nav class="landing-nav">
+        <a href="login.html" class="btn btn-ghost btn-sm" id="landingNavLogin">Đăng nhập</a>
+        <a href="login.html?tab=register" class="btn btn-primary btn-sm">Đăng ký</a>
+      </nav>
+    </header>
+
+    <main class="landing-main">
+      <section class="landing-hero">
+        <p class="landing-kicker">Nền tảng học trực tuyến</p>
+        <h1>Hệ thống học tập &amp; phân tích của bạn</h1>
+        <p class="landing-lead">
+          Theo dõi khóa học, bài học, quiz và tiến độ — nhận gợi ý cá nhân hóa để nâng cao kết quả.
+          Một không gian thống nhất cho học viên và đội ngũ vận hành khóa học.
+        </p>
+        <div class="landing-cta">
+          <a href="login.html" class="btn btn-primary landing-cta-primary" id="landingCtaPrimary">Đăng nhập</a>
+          <a href="login.html?tab=register" class="btn btn-accent landing-cta-secondary">Tạo tài khoản học viên</a>
+        </div>
+        <p class="landing-note" id="landingSessionHint" hidden></p>
+      </section>
+
+      <section class="landing-features" aria-label="Tính năng">
+        <article class="landing-card">
+          <span class="landing-card-icon">🎓</span>
+          <h2>Lớp của tôi</h2>
+          <p>Học theo thứ tự, mở bài tiếp theo khi hoàn thành bài trước.</p>
+        </article>
+        <article class="landing-card">
+          <span class="landing-card-icon">📊</span>
+          <h2>Tiến độ &amp; log</h2>
+          <p>Ghi nhận thời gian học và điểm quiz để phân tích.</p>
+        </article>
+        <article class="landing-card">
+          <span class="landing-card-icon">✨</span>
+          <h2>Gợi ý thông minh</h2>
+          <p>Gợi ý dựa trên dữ liệu học của bạn.</p>
+        </article>
+      </section>
+    </main>
+
+    <footer class="landing-footer">
+      <span>StudyHub · Spring Boot API + static UI</span>
+    </footer>
+  </div>
+
+  <script src="js/landing.js"></script>
+</body>
+</html>
