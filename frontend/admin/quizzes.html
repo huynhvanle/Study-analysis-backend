@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <base href="/study-analysis/" />
+  <meta name="api-root" content="/study-analysis" />
+  <title>StudyHub — Quiz &amp; điểm (Admin)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/app.css?v=29" />
+</head>
+<body data-app-shell="admin">
+  <div id="app" class="app app--admin-dashboard" aria-hidden="false">
+    <div class="admin-layout">
+      <aside class="sidebar admin-sidebar" aria-label="Menu quản trị">
+        <div class="admin-sidebar-brand">
+          <span class="admin-brand-mark" aria-hidden="true">📚</span>
+          <div class="admin-brand-text">
+            <span class="admin-brand-name">Study<span class="admin-brand-accent">Hub</span></span>
+            <span class="admin-brand-sub">Admin Console</span>
+          </div>
+        </div>
+        <p class="sidebar-label admin-sidebar-label" id="navSectionLabel">Quản trị</p>
+        <nav class="sidebar-nav" id="nav"></nav>
+      </aside>
+
+      <div class="admin-layout-main">
+        <header class="topbar admin-topbar">
+          <div class="admin-topbar-search-wrap">
+            <span class="admin-search-icon" aria-hidden="true">🔍</span>
+            <input
+              type="search"
+              class="admin-topbar-search"
+              placeholder="Tìm kiếm trong quản trị…"
+              disabled
+              title="Tính năng đang phát triển"
+              aria-label="Tìm kiếm (sắp có)"
+            />
+          </div>
+          <div class="topbar-right admin-topbar-right">
+            <button type="button" class="admin-topbar-icon-btn" disabled title="Thông báo (sắp có)" aria-label="Thông báo">
+              <span class="admin-topbar-notify-dot" aria-hidden="true"></span>
+              🔔
+            </button>
+            <span id="roleBadge" class="role-badge admin-role-badge" title="Vai trò"></span>
+            <div class="user-chip admin-user-chip">
+              <span class="user-chip-avatar" id="userAvatar">?</span>
+              <div class="user-chip-text">
+                <span id="userDisplayName" class="user-chip-name">—</span>
+                <span id="userDisplayId" class="user-chip-id">—</span>
+              </div>
+            </div>
+            <button type="button" class="btn btn-ghost btn-sm js-logout admin-logout-btn" id="btnLogout">Đăng xuất</button>
+          </div>
+        </header>
+
+        <main class="main admin-main">
+          <div class="main-inner admin-main-inner">
+            <nav id="adminBreadcrumb" class="admin-breadcrumb" aria-label="Vị trí trang"></nav>
+            <header class="page-header admin-page-header">
+              <h1 id="pageTitle">Quiz &amp; điểm</h1>
+              <p id="pageDesc" class="page-desc">Tạo quiz và nhập điểm.</p>
+            </header>
+            <div id="alert" class="banner" role="status" hidden></div>
+            <div id="content" class="page-content admin-page-content">
+              <div>
+                <span class="perm-hint staff">Tạo đánh giá và nhập điểm cho học viên (chấm điểm)</span>
+                <div class="card">
+                  <h2>Tạo quiz cho bài học</h2>
+                  <form id="adQuiz" class="row">
+                    <div class="field" style="width:140px;margin-bottom:0">
+                      <label>Mã bài học</label>
+                      <input name="lessonId" type="number" min="1" required />
+                    </div>
+                    <div class="field" style="flex:1;min-width:180px;margin-bottom:0">
+                      <label>Tên quiz</label>
+                      <input name="title" required />
+                    </div>
+                    <button type="submit" class="btn btn-primary">Tạo quiz</button>
+                  </form>
+                </div>
+                <div class="card">
+                  <h2>Ghi kết quả quiz (mọi học viên)</h2>
+                  <form id="adResult" class="grid-2">
+                    <div class="field"><label>Mã học viên</label><input name="userId" type="number" min="1" required /></div>
+                    <div class="field"><label>Mã quiz</label><input name="quizId" type="number" min="1" required /></div>
+                    <div class="field" style="grid-column:1/-1"><label>Điểm</label><input name="score" type="number" step="0.1" min="0" max="100" value="75" required /></div>
+                    <div style="grid-column:1/-1"><button type="submit" class="btn btn-accent">Lưu kết quả</button></div>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    window.__ADMIN_PAGE__ = {
+      active: 'quizzes',
+      title: 'Quiz & điểm',
+      desc: 'Tạo quiz và nhập điểm.',
+    };
+  </script>
+  <script src="js/admin-common.js?v=33"></script>
+  <script src="js/admin-quizzes.js?v=33"></script>
+</body>
+</html>

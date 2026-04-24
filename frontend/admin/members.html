@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <base href="/study-analysis/" />
+  <meta name="api-root" content="/study-analysis" />
+  <title>StudyHub — Thành viên (Admin)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/app.css?v=34" />
+</head>
+<body data-app-shell="admin">
+  <div id="app" class="app app--admin-dashboard" aria-hidden="false">
+    <div class="admin-layout">
+      <aside class="sidebar admin-sidebar" aria-label="Menu quản trị">
+        <div class="admin-sidebar-brand">
+          <span class="admin-brand-mark" aria-hidden="true">📚</span>
+          <div class="admin-brand-text">
+            <span class="admin-brand-name">Study<span class="admin-brand-accent">Hub</span></span>
+            <span class="admin-brand-sub">Admin Console</span>
+          </div>
+        </div>
+        <p class="sidebar-label admin-sidebar-label" id="navSectionLabel">Quản trị</p>
+        <nav class="sidebar-nav" id="nav"></nav>
+      </aside>
+
+      <div class="admin-layout-main">
+        <header class="topbar admin-topbar">
+          <div class="admin-topbar-search-wrap">
+            <span class="admin-search-icon" aria-hidden="true">🔍</span>
+            <input
+              type="search"
+              class="admin-topbar-search"
+              placeholder="Tìm kiếm trong quản trị…"
+              disabled
+              title="Tính năng đang phát triển"
+              aria-label="Tìm kiếm (sắp có)"
+            />
+          </div>
+          <div class="topbar-right admin-topbar-right">
+            <button type="button" class="admin-topbar-icon-btn" disabled title="Thông báo (sắp có)" aria-label="Thông báo">
+              <span class="admin-topbar-notify-dot" aria-hidden="true"></span>
+              🔔
+            </button>
+            <span id="roleBadge" class="role-badge admin-role-badge" title="Vai trò"></span>
+            <div class="user-chip admin-user-chip">
+              <span class="user-chip-avatar" id="userAvatar">?</span>
+              <div class="user-chip-text">
+                <span id="userDisplayName" class="user-chip-name">—</span>
+                <span id="userDisplayId" class="user-chip-id">—</span>
+              </div>
+            </div>
+            <button type="button" class="btn btn-ghost btn-sm js-logout admin-logout-btn" id="btnLogout">Đăng xuất</button>
+          </div>
+        </header>
+
+        <main class="main admin-main">
+          <div class="main-inner admin-main-inner">
+            <nav id="adminBreadcrumb" class="admin-breadcrumb" aria-label="Vị trí trang"></nav>
+            <header class="page-header admin-page-header">
+              <h1 id="pageTitle">Thành viên</h1>
+              <p id="pageDesc" class="page-desc">Danh sách tài khoản người dùng.</p>
+            </header>
+            <div id="alert" class="banner" role="status" hidden></div>
+            <div id="content" class="page-content admin-page-content">
+              <div>
+                <div class="card">
+                  <h2>Tất cả thành viên</h2>
+                  <button type="button" class="btn btn-primary" id="memLoad">Tải lại danh sách</button>
+                  <div id="memTable" style="margin-top:1rem"></div>
+                </div>
+                <div class="card">
+                  <h2>Chi tiết thành viên</h2>
+                  <form id="memOne" class="row">
+                    <div class="field" style="width:140px;margin-bottom:0">
+                      <label>Mã người dùng</label>
+                      <input name="userId" type="number" min="1" required />
+                    </div>
+                    <button type="submit" class="btn btn-ghost">Lấy hồ sơ</button>
+                  </form>
+                  <pre class="pre" id="memPre" hidden style="margin-top:1rem"></pre>
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    window.__ADMIN_PAGE__ = {
+      active: 'members',
+      title: 'Thành viên',
+      desc: 'Danh sách tài khoản người dùng.',
+    };
+  </script>
+  <script src="js/admin-common.js?v=34"></script>
+  <script src="js/admin-members.js?v=34"></script>
+</body>
+</html>

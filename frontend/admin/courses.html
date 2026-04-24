@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <base href="/study-analysis/" />
+  <meta name="api-root" content="/study-analysis" />
+  <title>StudyHub — Khóa học (Admin)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/app.css?v=34" />
+</head>
+<body data-app-shell="admin">
+  <div id="app" class="app app--admin-dashboard" aria-hidden="false">
+    <div class="admin-layout">
+      <aside class="sidebar admin-sidebar" aria-label="Menu quản trị">
+        <div class="admin-sidebar-brand">
+          <span class="admin-brand-mark" aria-hidden="true">📚</span>
+          <div class="admin-brand-text">
+            <span class="admin-brand-name">Study<span class="admin-brand-accent">Hub</span></span>
+            <span class="admin-brand-sub">Admin Console</span>
+          </div>
+        </div>
+        <p class="sidebar-label admin-sidebar-label" id="navSectionLabel">Quản trị</p>
+        <nav class="sidebar-nav" id="nav"></nav>
+      </aside>
+
+      <div class="admin-layout-main">
+        <header class="topbar admin-topbar">
+          <div class="admin-topbar-search-wrap">
+            <span class="admin-search-icon" aria-hidden="true">🔍</span>
+            <input
+              type="search"
+              class="admin-topbar-search"
+              placeholder="Tìm kiếm trong quản trị…"
+              disabled
+              title="Tính năng đang phát triển"
+              aria-label="Tìm kiếm (sắp có)"
+            />
+          </div>
+          <div class="topbar-right admin-topbar-right">
+            <button type="button" class="admin-topbar-icon-btn" disabled title="Thông báo (sắp có)" aria-label="Thông báo">
+              <span class="admin-topbar-notify-dot" aria-hidden="true"></span>
+              🔔
+            </button>
+            <span id="roleBadge" class="role-badge admin-role-badge" title="Vai trò"></span>
+            <div class="user-chip admin-user-chip">
+              <span class="user-chip-avatar" id="userAvatar">?</span>
+              <div class="user-chip-text">
+                <span id="userDisplayName" class="user-chip-name">—</span>
+                <span id="userDisplayId" class="user-chip-id">—</span>
+              </div>
+            </div>
+            <button type="button" class="btn btn-ghost btn-sm js-logout admin-logout-btn" id="btnLogout">Đăng xuất</button>
+          </div>
+        </header>
+
+        <main class="main admin-main">
+          <div class="main-inner admin-main-inner">
+            <nav id="adminBreadcrumb" class="admin-breadcrumb" aria-label="Vị trí trang"></nav>
+            <header class="page-header admin-page-header">
+              <h1 id="pageTitle">Khóa học</h1>
+            </header>
+            <div id="alert" class="banner" role="status" hidden></div>
+            <div id="content" class="page-content admin-page-content">
+              <div>
+                <div class="card admin-course-page">
+                  <div class="admin-course-toolbar">
+                    <h2>Danh sách khóa học</h2>
+                  </div>
+                  <div class="admin-course-actions-bar">
+                    <div class="admin-course-search-wrap">
+                      <label for="adCourseSearch" class="visually-hidden">Tìm khóa học</label>
+                      <input
+                        type="search"
+                        id="adCourseSearch"
+                        class="admin-course-search-input"
+                        placeholder="Tìm theo tiêu đề, ID, trạng thái, slug, danh mục…"
+                        autocomplete="off"
+                      />
+                    </div>
+                    <div class="admin-course-actions">
+                      <button type="button" class="btn btn-ghost" id="catBtnOpenManager" title="Thêm, sửa, xoá nhóm khóa học">Quản lý danh mục</button>
+                      <button type="button" class="btn btn-primary" id="adBtnOpenCreate">+ Thêm</button>
+                      <button type="button" class="btn btn-ghost" id="adCatLoad">Tải lại</button>
+                    </div>
+                  </div>
+                  <p class="muted admin-course-hint">Chọn một dòng trong bảng để <strong>Sửa</strong> hoặc <strong>Xoá</strong>. Dùng ô tìm kiếm để lọc nhanh.</p>
+                  <div id="adCat"></div>
+                </div>
+
+                <div id="adCourseModal" class="admin-modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="adCourseModalTitle" aria-hidden="true">
+                  <div class="admin-modal-backdrop" id="adCourseModalBackdrop" role="presentation"></div>
+                  <div class="admin-modal-panel">
+                    <button type="button" class="admin-modal-close" id="adCourseModalClose" aria-label="Đóng">×</button>
+                    <h2 id="adCourseModalTitle" class="admin-modal-title">Thêm khóa học mới</h2>
+                    <form id="adCourse">
+                      <div class="field"><label>Tiêu đề</label><input name="title" required /></div>
+                      <div class="field"><label>Mô tả</label><textarea name="description"></textarea></div>
+                      <div class="grid-2">
+                        <div class="field"><label>Danh mục</label><select name="categoryId" id="adCreateCat" required></select></div>
+                        <div class="field"><label>Cấp độ</label><input name="level" placeholder="Beginner" /></div>
+                      </div>
+                      <div class="field"><label>Ảnh bìa (URL)</label><input name="coverImageUrl" type="url" placeholder="https://…" /></div>
+                      <div class="grid-2">
+                        <div class="field"><label>Ngôn ngữ</label><input name="language" placeholder="vi" /></div>
+                        <div class="field"><label>Trạng thái</label>
+                          <select name="status">
+                            <option value="PUBLISHED" selected>Đã xuất bản (catalog)</option>
+                            <option value="DRAFT">Bản nháp (ẩn)</option>
+                            <option value="ARCHIVED">Đã gỡ</option>
+                          </select>
+                        </div>
+                      </div>
+                      <input type="hidden" name="createdByUserId" id="adCreatedByUserId" value="" />
+                      <div class="admin-modal-actions">
+                        <button type="button" class="btn btn-ghost" id="adCourseModalCancel">Huỷ</button>
+                        <button type="submit" class="btn btn-primary">Tạo khóa học</button>
+                      </div>
+                    </form>
+                    <pre class="pre" id="adCourseOut" hidden style="margin-top:1rem"></pre>
+                  </div>
+                </div>
+
+                <div id="adEditModal" class="admin-modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="adEditModalTitle" aria-hidden="true">
+                  <div class="admin-modal-backdrop" id="adEditModalBackdrop" role="presentation"></div>
+                  <div class="admin-modal-panel">
+                    <button type="button" class="admin-modal-close" id="adEditModalClose" aria-label="Đóng">×</button>
+                    <h2 id="adEditModalTitle" class="admin-modal-title">Sửa khóa học</h2>
+                    <form id="adCourseEdit">
+                      <input type="hidden" id="adEditCourseId" value="" />
+                      <div class="field"><label>Tiêu đề</label><input name="title" required /></div>
+                      <div class="field"><label>Mô tả</label><textarea name="description"></textarea></div>
+                      <div class="grid-2">
+                        <div class="field"><label>Danh mục</label><select name="categoryId" id="adEditCat" required></select></div>
+                        <div class="field"><label>Cấp độ</label><input name="level" /></div>
+                      </div>
+                      <div class="field"><label>Ảnh bìa (URL)</label><input name="coverImageUrl" type="url" /></div>
+                      <div class="grid-2">
+                        <div class="field"><label>Ngôn ngữ</label><input name="language" /></div>
+                        <div class="field"><label>Trạng thái</label>
+                          <select name="status">
+                            <option value="PUBLISHED">Đã xuất bản</option>
+                            <option value="DRAFT">Bản nháp</option>
+                            <option value="ARCHIVED">Đã gỡ</option>
+                          </select>
+                        </div>
+                      </div>
+                      <div class="admin-modal-actions">
+                        <button type="button" class="btn btn-ghost" id="adEditModalCancel">Huỷ</button>
+                        <button type="submit" class="btn btn-primary">Cập nhật khóa học</button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+
+                <div id="catManagerModal" class="admin-modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="catManagerTitle" aria-hidden="true">
+                  <div class="admin-modal-backdrop" id="catManagerBackdrop" role="presentation"></div>
+                  <div class="admin-modal-panel admin-modal-panel--wide">
+                    <button type="button" class="admin-modal-close" id="catManagerClose" aria-label="Đóng">×</button>
+                    <h2 id="catManagerTitle" class="admin-modal-title">Quản lý danh mục</h2>
+                    <div class="admin-course-toolbar" style="margin-top: -0.25rem; margin-bottom: 0.5rem">
+                      <div class="admin-course-toolbar-actions" style="width: 100%; justify-content: flex-end; gap: 0.5rem">
+                        <button type="button" class="btn btn-primary" id="catBtnAdd">+ Thêm danh mục</button>
+                        <button type="button" class="btn btn-ghost" id="catBtnReload">Tải lại</button>
+                      </div>
+                    </div>
+                    <p class="muted admin-course-hint">Dùng khi gán khóa học vào nhóm. Chỉ xoá được khi không còn khóa học nào dùng danh mục.</p>
+                    <div id="catTableWrap"></div>
+                  </div>
+                </div>
+
+                <div id="catModal" class="admin-modal-overlay admin-modal--nested hidden" role="dialog" aria-modal="true" aria-labelledby="catModalTitle" aria-hidden="true">
+                  <div class="admin-modal-backdrop" id="catModalBackdrop" role="presentation"></div>
+                  <div class="admin-modal-panel">
+                    <button type="button" class="admin-modal-close" id="catModalClose" aria-label="Đóng">×</button>
+                    <h2 id="catModalTitle" class="admin-modal-title">Thêm danh mục</h2>
+                    <form id="catForm">
+                      <input type="hidden" id="catEditId" value="" />
+                      <div class="field"><label>Tên danh mục</label><input name="name" required maxlength="255" placeholder="VD: Computer Science" /></div>
+                      <div class="admin-modal-actions">
+                        <button type="button" class="btn btn-ghost" id="catModalCancel">Huỷ</button>
+                        <button type="submit" class="btn btn-primary" id="catModalSubmit">Lưu</button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+
+                <div id="adLessonsModal" class="admin-modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="adLessonsModalTitle" aria-hidden="true">
+                  <div class="admin-modal-backdrop" id="adLessonsModalBackdrop" role="presentation"></div>
+                  <div class="admin-modal-panel admin-modal-panel--wide">
+                    <button type="button" class="admin-modal-close" id="adLessonsModalClose" aria-label="Đóng">×</button>
+                    <h2 id="adLessonsModalTitle" class="admin-modal-title">Bài học</h2>
+                    <p class="muted admin-course-hint" style="margin-top: -0.25rem">
+                      Mỗi bài = một video: dán link <strong>YouTube</strong>, <strong>Vimeo</strong>, hoặc URL file <strong>.mp4</strong> công khai. Học viên xem nhúng trong <strong>Lớp của tôi</strong>.
+                    </p>
+                    <div id="adLessonsList" class="ad-lessons-list-wrap"></div>
+                    <form id="adLessonForm" class="card" style="margin-top: 1rem">
+                      <h3 style="margin: 0 0 0.75rem; font-size: 1rem">Thêm bài học</h3>
+                      <input type="hidden" name="courseId" id="adLessonsCourseId" value="" />
+                      <div class="field"><label>Tiêu đề</label><input name="title" required placeholder="Ví dụ: Giới thiệu Spring Boot" /></div>
+                      <div class="field">
+                        <label>URL nội dung</label>
+                        <input name="contentUrl" type="url" required placeholder="https://www.youtube.com/watch?v=… hoặc link .mp4" />
+                      </div>
+                      <div class="grid-2">
+                        <div class="field"><label>Thứ tự</label><input name="orderIndex" type="number" min="1" required value="1" /></div>
+                        <div class="field"><label>Thời lượng (phút)</label><input name="duration" type="number" min="1" required value="15" /></div>
+                      </div>
+                      <button type="submit" class="btn btn-primary">Thêm bài</button>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    window.__ADMIN_PAGE__ = {
+      active: 'courses',
+      title: 'Khóa học',
+      desc: 'Tạo, sửa, xuất bản khóa học.',
+    };
+  </script>
+  <script src="js/admin-common.js?v=34"></script>
+  <script src="js/admin-courses.js?v=34"></script>
+</body>
+</html>

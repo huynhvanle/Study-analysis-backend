@@ -21,9 +21,16 @@ echo "Compiling (copy frontend → classpath)…"
 $MVN -q clean compile -DskipTests
 
 PORT="${SERVER_PORT:-8081}"
-echo "Starting Spring Boot…"
+export SPRING_PROFILES_ACTIVE="${SPRING_PROFILES_ACTIVE:-dev}"
+
+echo "Starting Spring Boot (profile=${SPRING_PROFILES_ACTIVE})…"
 echo "  → Giao diện:    http://localhost:${PORT}/study-analysis/"
 echo "  → API ví dụ:    http://localhost:${PORT}/study-analysis/users"
+if [[ "${SPRING_PROFILES_ACTIVE}" == *"dev"* ]]; then
+  echo ""
+  echo "  Dev FE: sửa frontend/ → phục vụ trực tiếp từ đĩa, không cache HTTP."
+  echo "  DevTools: đổi frontend/ có thể restart app + LiveReload (port 35729); tắt trong application-dev.yaml → spring.devtools.restart.enabled: false"
+fi
 echo ""
 
 exec $MVN -q spring-boot:run

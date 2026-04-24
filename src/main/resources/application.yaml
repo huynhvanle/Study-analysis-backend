@@ -10,10 +10,12 @@ jwt:
 spring:
   application:
     name: study-analysis
-  # FE: classpath:/static/ (copy từ /frontend khi build) + fallback file:./frontend khi dev
+  # FE: ưu tiên thư mục frontend/ trên đĩa (sửa là thấy ngay), sau đó classpath (sau mvn compile).
   web:
     resources:
-      static-locations: classpath:/static/,file:./frontend/
+      static-locations: file:./frontend/,classpath:/static/
+      cache:
+        period: 0
   datasource: #mng tạo db nhé
     url: "jdbc:mysql://localhost:3306/identity_service"
     username: root

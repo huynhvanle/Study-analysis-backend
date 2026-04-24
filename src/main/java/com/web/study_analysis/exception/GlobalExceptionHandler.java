@@ -7,9 +7,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
-@ControllerAdvice
+/**
+ * Chỉ áp cho {@link RestController} — lỗi forward trang tĩnh / {@code @Controller} view không trả JSON 999 ra trình duyệt.
+ */
+@ControllerAdvice(annotations = RestController.class)
 @Slf4j
 public class GlobalExceptionHandler {
 

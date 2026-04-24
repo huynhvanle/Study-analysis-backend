@@ -1,0 +1,24 @@
+# Profile dev: FE chỉnh trong thư mục frontend/ → xem ngay sau khi reload trình duyệt (không cache).
+# Chạy: SPRING_PROFILES_ACTIVE=dev ./mvnw spring-boot:run   hoặc ./run.sh (đã bật profile dev).
+
+spring:
+  devtools:
+    livereload:
+      enabled: true
+      # Port mặc định 35729 — extension “LiveReload” có thể kết nối để auto refresh.
+    restart:
+      # Khi true: mỗi lần đổi file trong frontend/ → restart app nhẹ → LiveReload báo tab trình duyệt refresh.
+      # Nếu restart quá hay gây khó chịu khi IDE auto-save: đặt false và chỉ F5 sau khi sửa FE.
+      enabled: true
+      additional-paths:
+        - frontend
+      poll-interval: 2s
+      quiet-period: 1s
+  web:
+    resources:
+      # Ưu tiên file trên đĩa để không cần mvn compile mỗi lần sửa HTML/CSS/JS
+      static-locations: file:./frontend/,classpath:/static/
+      cache:
+        period: 0
+      chain:
+        cache: false

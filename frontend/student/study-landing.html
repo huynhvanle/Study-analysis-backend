@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <base href="/study-analysis/" />
+  <meta name="api-root" content="/study-analysis" />
+  <title>StudyHub — Khóa học của bạn</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/app.css?v=33" />
+</head>
+<body class="landing-body" data-app-shell="study-landing">
+  <div class="landing-page" id="landingRoot">
+    <div id="landingChrome">
+      <header class="landing-sticky">
+        <div class="landing-inner landing-nav-row">
+          <a href="student/study-landing.html" class="landing-logo">StudyHub</a>
+
+          <nav class="landing-nav-links" aria-label="Menu chính">
+            <button type="button" class="landing-nav-pill" aria-expanded="false" disabled title="Sắp có">Khám phá ▾</button>
+            <button type="button" class="landing-nav-pill" aria-expanded="false" disabled title="Sắp có">Lộ trình ▾</button>
+          </nav>
+
+          <form class="landing-search" id="landingSearchForm" role="search" aria-label="Tìm khóa học (demo)">
+            <span class="landing-search-icon" aria-hidden="true">🔍</span>
+            <input
+              type="search"
+              name="q"
+              class="landing-search-input"
+              placeholder="Tìm kỹ năng, chứng chỉ hoặc khóa học…"
+              autocomplete="off"
+              aria-describedby="landingSearchHint"
+            />
+          </form>
+
+          <div class="landing-nav-actions" id="landingNavGuest">
+            <a href="index.html?auth=1" class="landing-link-login" id="landingNavLogin">Đăng nhập</a>
+            <a href="index.html?auth=1&amp;tab=register" class="btn btn-outline-landing btn-sm" id="landingJoinBtn">Tham gia miễn phí</a>
+          </div>
+
+          <div class="landing-nav-actions" id="landingNavStudent" hidden>
+            <div class="student-user-menu-wrap">
+              <button
+                type="button"
+                id="landingUserMenuBtn"
+                class="student-nav-avatar-btn"
+                aria-expanded="false"
+                aria-controls="landingUserDropdown"
+                aria-haspopup="true"
+                aria-label="Menu tài khoản"
+              >
+                <span id="landingUserAvatar" class="student-avatar-circle">?</span>
+              </button>
+              <div id="landingUserDropdown" class="student-user-dropdown hidden" role="menu" aria-labelledby="landingUserMenuBtn">
+                <div class="student-user-dropdown-profile">
+                  <span id="landingUserDisplayName" class="student-dropdown-name">—</span>
+                  <span id="landingUserDisplayId" class="student-dropdown-id">—</span>
+                  <span id="landingRoleBadge" class="role-badge student"></span>
+                </div>
+                <div class="student-dropdown-sep" role="separator"></div>
+                <p class="student-dropdown-section-label">Thông tin</p>
+                <a href="student/student.html" role="menuitem" class="student-dropdown-item">Hồ sơ &amp; học tập</a>
+                <div class="student-dropdown-sep" role="separator"></div>
+                <button type="button" role="menuitem" class="student-dropdown-item student-dropdown-item--danger js-logout">Đăng xuất</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+    </div>
+
+    <div id="landingGuestMarketing">
+    <main class="landing-main-full">
+      <section class="landing-hero-dual" aria-label="Ưu đãi">
+        <div class="landing-inner landing-hero-grid">
+          <article class="landing-banner landing-banner--plus">
+            <span class="landing-banner-badge">Ưu đãi</span>
+            <h2 class="landing-banner-title">Gói StudyHub Plus</h2>
+            <p class="landing-banner-text">Truy cập không giới hạn bài học &amp; quiz — phù hợp học viên nghiêm túc.</p>
+            <a href="index.html?auth=1&amp;tab=register" class="btn btn-primary landing-banner-cta" id="landingCtaPrimary">Bắt đầu miễn phí →</a>
+          </article>
+          <article class="landing-banner landing-banner--biz">
+            <span class="landing-banner-badge landing-banner-badge--light">Nhóm</span>
+            <h2 class="landing-banner-title">StudyHub cho đội ngũ</h2>
+            <p class="landing-banner-text">Quản lý khóa học, theo dõi tiến độ và báo cáo cho doanh nghiệp.</p>
+            <a href="index.html?auth=1" class="btn btn-landing-inverse landing-banner-cta">Tìm hiểu cho doanh nghiệp →</a>
+          </article>
+        </div>
+        <p class="landing-search-hint landing-inner" id="landingSearchHint" hidden></p>
+      </section>
+
+      <p class="landing-note landing-inner" id="landingSessionHint" hidden></p>
+
+      <section class="landing-quick" aria-label="Bắt đầu nhanh">
+        <div class="landing-inner landing-quick-grid">
+          <a href="index.html?auth=1&amp;tab=register" class="landing-quick-card">
+            <span class="landing-quick-title">Khởi nghiệp kỹ năng mới</span>
+            <span class="landing-quick-desc">Chứng chỉ &amp; lộ trình gợi ý theo mục tiêu của bạn.</span>
+          </a>
+          <a href="index.html?auth=1" class="landing-quick-card">
+            <span class="landing-quick-title">StudyHub cho doanh nghiệp</span>
+            <span class="landing-quick-desc">Đào tạo nội bộ, báo cáo tiến độ theo nhóm.</span>
+          </a>
+          <a href="index.html?auth=1&amp;tab=register" class="landing-quick-card">
+            <span class="landing-quick-title">Lộ trình học tập dài hạn</span>
+            <span class="landing-quick-desc">Học có thứ tự, mở bài mới khi hoàn thành bài trước.</span>
+          </a>
+        </div>
+      </section>
+
+      <section class="landing-partners" aria-labelledby="partners-heading">
+        <div class="landing-inner">
+          <h2 class="landing-section-title" id="partners-heading">Học cùng nội dung và quy trình được tin dùng</h2>
+          <p class="landing-section-sub">Đối tác minh họa — tích hợp API Spring Boot &amp; giao diện tĩnh của bạn.</p>
+          <div class="landing-partners-track" role="list">
+            <span class="landing-partner-logo" role="listitem">Google</span>
+            <span class="landing-partner-logo" role="listitem">IBM</span>
+            <span class="landing-partner-logo" role="listitem">Microsoft</span>
+            <span class="landing-partner-logo" role="listitem">Stanford</span>
+            <span class="landing-partner-logo" role="listitem">DeepLearning.AI</span>
+            <span class="landing-partner-logo" role="listitem">Meta</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="landing-my-learning" aria-labelledby="landing-my-learning-title">
+        <div class="landing-inner">
+          <h2 class="landing-explore-cats-title" id="landing-my-learning-title">Khóa học đang học</h2>
+          <p class="landing-section-sub" id="landingMyLearningGuestHint">
+            <a href="index.html?auth=1">Đăng nhập</a> để xem tiến độ các khóa đã ghi danh.
+          </p>
+          <div id="landingMyCoursesLoggedIn" class="landing-my-courses-loggedin" hidden>
+            <p class="muted landing-my-learning-status" id="landingMyCoursesStatus" role="status"></p>
+            <div
+              id="landingMyCoursesGrid"
+              class="landing-featured-track landing-my-courses-track"
+              role="list"
+              aria-label="Khóa học đang học"
+            ></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="landing-explore-cats" aria-labelledby="landing-explore-cat-title">
+        <div class="landing-inner">
+          <h2 class="landing-explore-cats-title" id="landing-explore-cat-title">Khám phá danh mục</h2>
+          <div id="landingCategoryPills" class="landing-cat-pills">
+            <span class="muted landing-cat-pills-loading" id="landingCatPillsLoading">Đang tải…</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="landing-featured-wrap" aria-labelledby="landing-featured-heading">
+        <div class="landing-inner">
+          <div class="landing-featured-banner">
+            <div class="landing-featured-layout">
+              <div class="landing-featured-aside">
+                <p class="landing-featured-eyebrow">StudyHub</p>
+                <h2 class="landing-featured-heading" id="landing-featured-heading">Khóa học nổi bật</h2>
+                <p class="landing-featured-lead">Lựa chọn từ catalog công khai — đăng nhập để ghi danh.</p>
+                <a href="student/student.html" class="landing-featured-cta">Khám phá khóa học →</a>
+              </div>
+              <div class="landing-featured-rail" tabindex="0" role="region" aria-label="Danh sách khóa học nổi bật">
+                <div id="landingCatalogGrid" class="landing-featured-track">
+                  <p class="muted landing-featured-loading" id="landingCatalogLoading">Đang tải khóa học…</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="landing-features-bottom landing-inner" aria-label="Tính năng hệ thống">
+        <article class="landing-card">
+          <h2>Lớp của tôi</h2>
+          <p>Học theo thứ tự, mở bài tiếp theo khi hoàn thành bài trước.</p>
+        </article>
+        <article class="landing-card">
+          <h2>Tiến độ &amp; log</h2>
+          <p>Ghi nhận thời gian học và điểm quiz để phân tích.</p>
+        </article>
+        <article class="landing-card">
+          <h2>Gợi ý thông minh</h2>
+          <p>Gợi ý dựa trên dữ liệu học của bạn.</p>
+        </article>
+      </section>
+    </main>
+
+    <footer class="landing-footer-full">
+      <div class="landing-inner landing-footer-grid">
+        <div>
+          <strong class="landing-footer-brand">StudyHub</strong>
+          <p class="landing-footer-tag">Học trực tuyến · Spring Boot API · Giao diện tĩnh</p>
+        </div>
+        <div class="landing-footer-links">
+          <a href="index.html">Trang giới thiệu</a>
+          <a href="student/student.html">Học tập (ứng dụng)</a>
+          <a href="index.html?auth=1">Đăng nhập tài khoản khác</a>
+        </div>
+      </div>
+      <p class="landing-footer-copy">© StudyHub — bản demo giao diện.</p>
+    </footer>
+    </div>
+  </div>
+
+  <!-- Modal đăng nhập: cùng trang với landing (không dùng iframe) -->
+  <div id="gate" class="auth-overlay hidden" aria-label="Đăng nhập StudyHub">
+    <div class="auth-backdrop" aria-hidden="true"></div>
+    <div class="auth-modal-card" role="dialog" aria-modal="true" aria-labelledby="authModalTitle" tabindex="-1">
+      <button type="button" class="auth-modal-close" id="authModalClose" aria-label="Đóng hộp thoại">×</button>
+      <div class="auth-modal-brand">StudyHub</div>
+      <h2 id="authModalTitle" class="auth-modal-title">Đăng nhập hoặc tạo tài khoản</h2>
+      <p class="auth-modal-lead">Một tài khoản để theo dõi khóa học, quiz và tiến độ học tập của bạn.</p>
+
+      <div class="gate-tabs auth-modal-tabs" role="tablist">
+        <button type="button" class="gate-tab active" data-tab="login" role="tab" aria-selected="true">Đăng nhập</button>
+        <button type="button" class="gate-tab" data-tab="register" role="tab" aria-selected="false">Đăng ký</button>
+      </div>
+      <div id="gateAlert" class="gate-alert" role="status" hidden></div>
+
+      <form id="formLogin" class="gate-form" data-panel="login" novalidate>
+        <div class="field">
+          <label for="loginUser">Tên đăng nhập</label>
+          <input id="loginUser" name="username" required minlength="5" maxlength="50" autocomplete="username" placeholder="ít nhất 5 ký tự" />
+        </div>
+        <div class="field">
+          <label for="loginPass">Mật khẩu</label>
+          <input id="loginPass" name="password" type="password" required minlength="8" maxlength="16" autocomplete="current-password" placeholder="8–16 ký tự" />
+        </div>
+        <button type="submit" class="btn btn-primary btn-block gate-submit">Đăng nhập</button>
+      </form>
+
+      <form id="formRegister" class="gate-form hidden" data-panel="register" novalidate>
+        <p class="gate-note">Chỉ đăng ký <strong>học viên (STUDENT)</strong>. Tài khoản quản trị do đội ngũ cấp.</p>
+        <div class="field">
+          <label for="regUser">Tên đăng nhập</label>
+          <input id="regUser" name="username" required minlength="5" maxlength="50" autocomplete="username" placeholder="5–50 ký tự" />
+        </div>
+        <div class="field">
+          <label for="regPass">Mật khẩu</label>
+          <input id="regPass" name="password" type="password" required minlength="8" maxlength="16" autocomplete="new-password" placeholder="8–16 ký tự" />
+        </div>
+        <div class="field">
+          <label for="regPass2">Nhập lại mật khẩu</label>
+          <input id="regPass2" name="passwordConfirm" type="password" required minlength="8" maxlength="16" autocomplete="new-password" />
+        </div>
+        <div class="field">
+          <label for="regName">Tên hiển thị</label>
+          <input id="regName" name="name" maxlength="255" placeholder="Tuỳ chọn" />
+        </div>
+        <div class="field">
+          <label for="regEmail">Email</label>
+          <input id="regEmail" name="email" type="email" maxlength="255" placeholder="Tuỳ chọn" />
+        </div>
+        <button type="submit" class="btn btn-accent btn-block gate-submit">Tạo tài khoản</button>
+      </form>
+
+      <div class="auth-oauth-sep"><span>hoặc</span></div>
+      <div class="auth-oauth-grid">
+        <button type="button" class="auth-oauth-btn" disabled title="Chưa cấu hình OAuth">Tiếp tục với Google</button>
+        <button type="button" class="auth-oauth-btn" disabled title="Chưa cấu hình OAuth">Tiếp tục với Facebook</button>
+        <button type="button" class="auth-oauth-btn" disabled title="Chưa cấu hình OAuth">Tiếp tục với Apple</button>
+      </div>
+      <p class="auth-modal-foot">Tài khoản nhân sự (ADMIN / INSTRUCTOR) dùng cùng form đăng nhập.</p>
+      <p class="auth-modal-legal">
+        <a href="#">Điều khoản sử dụng</a>
+        ·
+        <a href="#">Quyền riêng tư</a>
+      </p>
+    </div>
+  </div>
+
+  <script src="js/landing.js?v=33"></script>
+  <script src="js/app.js?v=33"></script>
+</body>
+</html>

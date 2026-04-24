@@ -2,9 +2,9 @@ package com.web.study_analysis.auth.controller;
 
 import com.web.study_analysis.auth.dto.reponse.AuthenticationReponse;
 import com.web.study_analysis.auth.dto.request.AuthenticationRequest;
+import com.web.study_analysis.auth.dto.request.RegisterRequest;
 import com.web.study_analysis.auth.service.AuthenticationService;
 import com.web.study_analysis.exception.ApiReponse;
-import com.web.study_analysis.user.dto.request.UserCreationRequest;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -31,7 +31,7 @@ public class AuthenticationController {
     }
 
     @PostMapping("/register")
-    public ApiReponse<AuthenticationReponse> register(@Valid @RequestBody UserCreationRequest request) {
+    public ApiReponse<AuthenticationReponse> register(@Valid @RequestBody RegisterRequest request) {
         AuthenticationReponse body = authenticationService.register(request);
         return ApiReponse.<AuthenticationReponse>builder()
                 .result(body)

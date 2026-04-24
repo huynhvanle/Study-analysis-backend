@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <base href="/study-analysis/" />
+  <meta name="api-root" content="/study-analysis" />
+  <title>StudyHub — Học tập</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/app.css?v=33" />
+</head>
+<body class="landing-body student-shell" data-app-shell="student">
+  <div id="app" class="app app--student-landing-header" aria-hidden="false">
+    <header class="student-topbar-coursera" role="banner">
+      <div class="student-topbar-inner">
+        <div class="student-topbar-left">
+          <button type="button" class="student-icon-btn" id="studentNavMenuBtn" aria-label="Mở menu" title="Menu (sắp có)">
+            <svg class="student-icon-svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M4 4h4v4H4V4zm6 0h4v4h-4V4zm6 0h4v4h-4V4zM4 10h4v4H4v-4zm6 0h4v4h-4v-4zm6 0h4v4h-4v-4zM4 16h4v4H4v-4zm6 0h4v4h-4v-4zm6 0h4v4h-4v-4z" />
+            </svg>
+          </button>
+          <a href="student/study-landing.html" class="student-topbar-logo">StudyHub</a>
+        </div>
+
+        <form class="student-search-coursera" id="studentSearchForm" role="search" aria-label="Tìm khóa học">
+          <input
+            type="search"
+            name="q"
+            id="studentSearchQ"
+            class="student-search-input"
+            placeholder="Tìm khóa học, kỹ năng hoặc chứng chỉ…"
+            autocomplete="off"
+            aria-describedby="studentSearchHint"
+          />
+          <button type="submit" class="student-search-submit" aria-label="Tìm kiếm">
+            🔍
+          </button>
+        </form>
+        <p id="studentSearchHint" class="visually-hidden">Tìm kiếm demo — kết quả đầy đủ sẽ nối API sau.</p>
+
+        <div class="student-topbar-right">
+          <button type="button" class="student-icon-btn student-icon-btn--ghost" disabled title="Ngôn ngữ (sắp có)" aria-label="Ngôn ngữ">🌐</button>
+          <button type="button" class="student-icon-btn student-icon-btn--ghost" disabled title="Thông báo (sắp có)" aria-label="Thông báo">🔔</button>
+
+          <div class="student-user-menu-wrap">
+            <button
+              type="button"
+              id="studentUserMenuBtn"
+              class="student-nav-avatar-btn"
+              aria-expanded="false"
+              aria-controls="studentUserDropdown"
+              aria-haspopup="true"
+            >
+              <span id="userAvatar" class="student-avatar-circle">?</span>
+            </button>
+            <div id="studentUserDropdown" class="student-user-dropdown hidden" role="menu" aria-labelledby="studentUserMenuBtn">
+              <div class="student-user-dropdown-profile">
+                <span id="userDisplayName" class="student-dropdown-name">—</span>
+                <span id="userDisplayId" class="student-dropdown-id">—</span>
+                <span id="roleBadge" class="role-badge student"></span>
+              </div>
+              <div class="student-dropdown-sep" role="separator"></div>
+              <p class="student-dropdown-section-label">Thông tin</p>
+              <button type="button" role="menuitem" class="student-dropdown-item" data-student-view="student-home">Hồ sơ &amp; học tập</button>
+              <button type="button" role="menuitem" class="student-dropdown-item" disabled title="Sắp có">Giao dịch của tôi</button>
+              <button type="button" role="menuitem" class="student-dropdown-item" disabled title="Sắp có">Cài đặt</button>
+              <button type="button" role="menuitem" class="student-dropdown-item" disabled title="Sắp có">Cập nhật</button>
+              <button type="button" role="menuitem" class="student-dropdown-item" disabled title="Sắp có">Thành tích</button>
+              <button type="button" role="menuitem" class="student-dropdown-item" disabled title="Sắp có">Trợ giúp</button>
+              <div class="student-dropdown-sep" role="separator"></div>
+              <button type="button" role="menuitem" class="student-dropdown-item student-dropdown-item--danger js-logout" id="btnLogout">Đăng xuất</button>
+              <div class="student-dropdown-promo">
+                <strong>StudyHub <span class="student-dropdown-promo-badge">Plus</span></strong>
+                <span class="student-dropdown-promo-desc">Truy cập đầy đủ khóa học &amp; quiz — sắp ra mắt</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="app-body">
+      <aside class="sidebar">
+        <p class="sidebar-label" id="navSectionLabel">Học tập</p>
+        <nav class="sidebar-nav" id="nav"></nav>
+      </aside>
+      <main class="main">
+        <div class="main-inner">
+          <header class="page-header">
+            <h1 id="pageTitle">Tổng quan</h1>
+            <p id="pageDesc" class="page-desc">—</p>
+          </header>
+          <div id="alert" class="banner" role="status" hidden></div>
+          <div id="content" class="page-content"></div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script src="js/app.js?v=33"></script>
+</body>
+</html>
