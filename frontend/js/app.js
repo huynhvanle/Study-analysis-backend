@@ -2,6 +2,7 @@
   'use strict';
 
   const STORAGE_KEY = 'study_analysis_session';
+  const SHELL = document.body?.dataset?.appShell || '';
 
   const state = {
     token: null,
@@ -10,6 +11,8 @@
     role: null,
     name: null,
     email: null,
+    /** "FREE" | "PLUS" */
+    plan: null,
   };
 
   let activeView = '';
@@ -37,6 +40,38 @@
 
   function isAuthenticated() {
     return !!(state.token && state.userId != null && !isTokenExpired(state.token));
+  }
+
+  /** Đường dẫn tương đối dưới /study-analysis/ dùng làm &next= sau khi bắt đăng nhập. */
+  function pathUnderAppForNextParam() {
+    try {
+      const path = window.location.pathname || '';
+      const mark = '/study-analysis/';
+      const idx = path.indexOf(mark);
+      if (idx >= 0) {
+        return path.slice(idx + mark.length) + window.location.search + window.location.hash;
+      }
+    } catch {
+      /* fall through */
+    }
+    return 'student/study-landing.html';
+  }
+
+  /** Chỉ cho phép quay lại trang tĩnh hợp lệ, tránh open redirect. */
+  function getSafeNextHrefFromQuery() {
+    const fallback = 'student/study-landing.html';
+    try {
+      const raw = new URLSearchParams(window.location.search).get('next');
+      if (raw == null || raw === '') return fallback;
+      const s = String(raw).trim();
+      if (!s || s.startsWith('//') || /[\r\n\0]/.test(s) || s.length > 512) return fallback;
+      if (/^https?:/i.test(s)) return fallback;
+      if (s.includes('..') || s.includes(':\\') || s.startsWith('/\\') || s.startsWith('//')) return fallback;
+      if (!/^(index\.html|student\/[A-Za-z0-9._-]+\.html)([?#].*)?$/.test(s)) return fallback;
+      return s;
+    } catch {
+      return fallback;
+    }
   }
 
   function isTokenExpired(token) {
@@ -135,6 +170,7 @@
       state.role = s.role || null;
       state.name = s.name || null;
       state.email = s.email || null;
+      state.plan = s.plan || 'FREE';
     } catch {
       localStorage.removeItem(STORAGE_KEY);
     }
@@ -150,13 +186,44 @@
         role: state.role,
         name: state.name,
         email: state.email,
+        plan: state.plan || 'FREE',
       })
     );
   }
 
   function clearSession() {
-    state.token = state.userId = state.username = state.role = state.name = state.email = null;
+    state.token = state.userId = state.username = state.role = state.name = state.email = state.plan = null;
     localStorage.removeItem(STORAGE_KEY);
+  }
+
+  /** Trang tĩnh chi tiết khóa: ưu tiên slug, không có thì dùng id. */
+  function coursePublicUrl(course) {
+    if (!course || course.id == null) return 'student/explore.html';
+    const slug = course.slug && String(course.slug).trim();
+    if (slug) return 'student/course.html?slug=' + encodeURIComponent(slug);
+    return 'student/course.html?id=' + encodeURIComponent(String(course.id));
+  }
+
+  // Expose a small runtime API for standalone student pages (e.g. learn.html).
+  // Keep it minimal to avoid coupling UI code to internals.
+  function exposeRuntime() {
+    window.StudyApp = {
+      request,
+      state,
+      loadSession,
+      clearSession,
+      isAuthenticated,
+      isStaff,
+      showAppAlert,
+      escapeHtml,
+      escapeAttr,
+      lessonPlayerHtml,
+      syncLandingNav: syncLandingNavForSession,
+      coursePublicUrl,
+      urlForAuthWithNext() {
+        return 'index.html?auth=1&next=' + encodeURIComponent(pathUnderAppForNextParam());
+      },
+    };
   }
 
   function applyAuth(r) {
@@ -167,6 +234,7 @@
     state.role = r.role || null;
     state.name = r.name || null;
     state.email = r.email || null;
+    state.plan = r.plan != null ? String(r.plan) : 'FREE';
     saveSession();
   }
 
@@ -289,6 +357,16 @@
 
     updateTopbar();
     buildNav();
+    if (document.body.dataset.appShell === 'student') {
+      try {
+        const sp = new URLSearchParams(window.location.search);
+        if (sp.get('view') === 'classroom') {
+          activeView = 'student-classroom';
+        }
+      } catch {
+        /* ignore */
+      }
+    }
     if (!activeView || (NAV.find((n) => n.id === activeView)?.staffOnly && !isStaff())) {
       activeView = isStaff() ? 'admin-home' : 'student-home';
     }
@@ -297,6 +375,18 @@
       activeView = isStaff() ? 'admin-home' : 'student-home';
     }
     showView(activeView);
+    if (document.body.dataset.appShell === 'student') {
+      try {
+        const u = new URL(window.location.href);
+        if (u.searchParams.get('view') === 'classroom') {
+          u.searchParams.delete('view');
+          const qs = u.searchParams.toString();
+          window.history.replaceState({}, '', u.pathname + (qs ? `?${qs}` : '') + u.hash);
+        }
+      } catch {
+        /* ignore */
+      }
+    }
   }
 
   function updateTopbar() {
@@ -327,14 +417,20 @@
     const un = document.getElementById('userDisplayName');
     if (un) un.textContent = state.name || state.username || 'Người dùng';
     const uid = document.getElementById('userDisplayId');
-    if (uid) uid.textContent = 'ID ' + state.userId;
+    if (uid) {
+      uid.textContent = '';
+      uid.hidden = true;
+    }
 
     const lav = document.getElementById('landingUserAvatar');
     if (lav) lav.textContent = initial;
     const lun = document.getElementById('landingUserDisplayName');
     if (lun) lun.textContent = state.name || state.username || 'Người dùng';
     const lui = document.getElementById('landingUserDisplayId');
-    if (lui) lui.textContent = 'ID ' + state.userId;
+    if (lui) {
+      lui.textContent = '';
+      lui.hidden = true;
+    }
     const lrb = document.getElementById('landingRoleBadge');
     if (lrb) {
       lrb.textContent = roleLabelVi(state.role);
@@ -349,7 +445,6 @@
    */
   const NAV = [
     { id: 'student-home', label: 'Tổng quan', icon: '', desc: 'Tóm tắt học tập và số liệu nhanh.', studentOnly: true, allowStaff: true },
-    { id: 'student-explore', label: 'Khám phá khóa học', icon: '', desc: 'Xem danh mục công khai và ghi danh.', studentOnly: true, allowStaff: true },
     {
       id: 'student-classroom',
       label: 'Lớp của tôi',
@@ -358,9 +453,6 @@
       studentOnly: true,
       allowStaff: true,
     },
-    { id: 'student-learn', label: 'Bài học & quiz', icon: '', desc: 'Nhập ID thủ công: bài học và quiz.', studentOnly: true, allowStaff: true },
-    { id: 'student-track', label: 'Tiến độ & nhật ký', icon: '', desc: 'Đánh dấu hoàn thành và ghi nhật ký học.', studentOnly: true, allowStaff: true },
-    { id: 'student-coach', label: 'Gợi ý học tập', icon: '', desc: 'Gợi ý cải thiện điểm dựa trên dữ liệu của bạn.', studentOnly: true, allowStaff: true },
     { id: 'admin-home', label: 'Tổng quan', icon: '', desc: 'Thống kê nhanh nền tảng.', staffOnly: true },
     { id: 'admin-members', label: 'Thành viên', icon: '', desc: 'Danh sách tài khoản người dùng.', staffOnly: true },
     { id: 'admin-courses', label: 'Khóa học', icon: '', desc: 'Tạo, sửa, xuất bản khóa học; danh mục qua nút trên trang.', staffOnly: true },
@@ -409,13 +501,27 @@
       return;
     }
 
-    const learn = document.createElement('div');
-    learn.className = 'nav-section-title';
-    learn.textContent = 'Học tập';
-    nav.appendChild(learn);
+    // Student: show home button at top.
+    if (document.body.dataset.appShell === 'student') {
+      const home = document.createElement('a');
+      home.href = 'student/study-landing.html';
+      home.className = 'btn btn-ghost btn-sm';
+      home.style.marginBottom = '0.75rem';
+      home.style.display = 'block';
+      home.textContent = '← Trang chủ';
+      nav.appendChild(home);
+    }
 
     NAV.filter((n) => n.studentOnly).forEach((item) => {
       if (!isStaff() && item.staffOnly) return;
+      if (item.id === 'student-classroom' && document.body.dataset.appShell === 'student') {
+        const a = document.createElement('a');
+        a.href = 'student/my-learning.html';
+        a.className = 'sidebar-nav-link';
+        a.innerHTML = navIconAndLabel(item);
+        nav.appendChild(a);
+        return;
+      }
       nav.appendChild(navButton(item));
     });
 
@@ -427,15 +533,7 @@
       appendStaffNavLinks(nav);
     }
 
-    if (document.body.dataset.appShell === 'student') {
-      const home = document.createElement('a');
-      home.href = 'student/study-landing.html';
-      home.className = 'btn btn-ghost btn-sm';
-      home.style.marginTop = '0.75rem';
-      home.style.display = 'block';
-      home.textContent = '← Trang chủ';
-      nav.appendChild(home);
-    }
+    // (home link already added at top for student shell)
   }
 
   function navButton(item) {
@@ -497,20 +595,8 @@
       case 'student-home':
         renderStudentHome(content);
         break;
-      case 'student-explore':
-        renderStudentExplore(content);
-        break;
       case 'student-classroom':
         renderStudentClassroom(content);
-        break;
-      case 'student-learn':
-        renderStudentLearn(content);
-        break;
-      case 'student-track':
-        renderStudentTrack(content);
-        break;
-      case 'student-coach':
-        renderStudentCoach(content);
         break;
       case 'admin-home':
         if (!requireStaff()) return;
@@ -630,7 +716,6 @@
     content.replaceChildren();
     const wrap = el(`
       <div>
-        <span class="perm-hint student">Không gian học viên · dữ liệu theo tài khoản của bạn (mã người dùng ${state.userId})</span>
         <div class="stat-grid" id="stuStats"></div>
       </div>
     `);
@@ -668,7 +753,6 @@
     content.appendChild(
       el(`
       <div class="course-explore course-explore--coursera">
-        <p class="perm-hint student">Khám phá danh mục công khai và ghi danh (mã người dùng ${state.userId}).</p>
         <section class="explore-hero-section" aria-labelledby="exploreCatHeading">
           <h2 id="exploreCatHeading" class="explore-section-title">Khám phá theo chủ đề</h2>
           <div id="exCategoryPills" class="explore-category-pills" role="tablist" aria-label="Danh mục"></div>
@@ -682,7 +766,6 @@
               <input type="search" id="exSearch" class="explore-search-input" placeholder="Tìm kỹ năng, công nghệ hoặc chủ đề…" value="${escapeAttr(initialQ)}" autocomplete="off" />
               <button type="button" class="btn btn-primary" id="exLoad">Tìm kiếm</button>
             </div>
-            <p class="muted course-explore-hint" style="margin:0.65rem 0 0;font-size:0.82rem">Có <strong>từ khóa</strong> → tìm trên server; không thì lọc theo chủ đề đã chọn.</p>
           </div>
           <div id="exCatalog" class="course-card-grid course-card-grid--coursera" aria-live="polite"></div>
           <div class="explore-more-wrap">
@@ -716,6 +799,10 @@
       return `course-card-media--ph${Number(id) % 6}`;
     }
 
+    function courseNeedsPlus(c) {
+      return String(c.accessTier || 'FREE').toUpperCase() === 'PLUS';
+    }
+
     function courseCard(c) {
       const desc = c.description ? String(c.description) : '';
       const short = desc.length > 140 ? `${desc.slice(0, 140)}…` : desc;
@@ -731,20 +818,26 @@
       const statsRow =
         stats.length > 0 ? `<p class="course-card-stats">${stats.join(' · ')}</p>` : '';
       const provider = escapeHtml(c.category ? `StudyHub · ${c.category}` : 'StudyHub');
-      return `
-      <article class="course-card course-card--coursera">
+      const needP = courseNeedsPlus(c);
+      const tierLabel = needP ? 'Plus' : 'Free';
+      const tierClass = needP ? 'course-tier-pill course-tier-pill--plus' : 'course-tier-pill course-tier-pill--free';
+      const tierTitle = needP ? 'Cần gói StudyHub Plus' : 'Miễn phí';
+      const plusPill = `<span class="${tierClass}" title="${escapeAttr(tierTitle)}">${tierLabel}</span>`;
+      const href = coursePublicUrl(c);
+      const al = escapeAttr((c.title || 'Khóa') + ' — xem mô tả & ghi danh');
+      return `<a class="course-card course-card--coursera course-card--link" href="${escapeAttr(href)}" aria-label="${al}">
         ${cover}
         <div class="course-card-body">
           <div class="course-card-provider-row">
             <span class="course-card-provider-name">${provider}</span>
+            ${plusPill}
           </div>
           <h3 class="course-card-title">${escapeHtml(c.title)}</h3>
           ${statsRow}
           <p class="course-card-desc">${escapeHtml(short || 'Khám phá nội dung do đội ngũ biên soạn.')}</p>
-          <p class="course-card-type-label">Khóa học</p>
-          <button type="button" class="btn btn-primary course-card-cta" data-enroll-course="${c.id}">Ghi danh</button>
+          <p class="course-card-type-label">Xem mô tả &amp; ghi danh <span class="course-card-cta-chev" aria-hidden="true">→</span></p>
         </div>
-      </article>`;
+      </a>`;
     }
 
     function renderPillsAndChips() {
@@ -830,23 +923,6 @@
       renderCatalogSlice();
     });
 
-    catalog.addEventListener('click', async (ev) => {
-      const btn = ev.target.closest('[data-enroll-course]');
-      if (!btn) return;
-      const courseId = Number(btn.dataset.enrollCourse);
-      if (!courseId) return;
-      showAppAlert('');
-      try {
-        await request('enrollments', {
-          method: 'POST',
-          body: { userId: state.userId, courseId },
-        });
-        showAppAlert('Đã ghi danh — vào <strong>Lớp của tôi</strong> để học.', 'ok');
-      } catch (err) {
-        showAppAlert(err.message, 'error');
-      }
-    });
-
     await loadCourses();
   }
 
@@ -892,42 +968,21 @@
 
         mount.innerHTML = courses
           .map((c) => {
-            const pct =
-              c.totalLessons > 0 ? Math.round((100 * c.completedLessons) / c.totalLessons) : 0;
-            const lessonBlocks = (c.lessons || [])
-              .map((l) => {
-                const lockNote = l.unlocked
-                  ? ''
-                  : ' <span class="muted" style="font-size:0.78rem">(chưa mở khóa)</span>';
-                const isQuizLesson = String(l.title || '').trim() === QUIZ_LESSON_TITLE;
-                const player = !l.unlocked
-                  ? '<p class="muted" style="margin:0">Hoàn thành bài trước để xem nội dung.</p>'
-                  : isQuizLesson
-                    ? `<button type="button" class="btn btn-primary" data-action="open-quiz" data-lesson-id="${l.lessonId}">Vào bài kiểm tra</button>`
-                    : lessonPlayerHtml(l.contentUrl);
-                const doneBtn =
-                  l.completed && l.unlocked
-                    ? '<span class="muted">Đã hoàn thành</span>'
-                    : l.unlocked
-                      ? `<button type="button" class="btn btn-sm btn-primary" data-action="complete-lesson" data-lesson-id="${l.lessonId}">Đánh dấu hoàn thành</button>`
-                      : '<span class="muted">—</span>';
-                return `<article class="lesson-block ${l.unlocked ? '' : 'lesson-block--locked'}" data-lesson-id="${l.lessonId}">
-                  <div class="lesson-block-head">
-                    <h3 class="lesson-block-title"><span class="lesson-block-order">${l.orderIndex}.</span> ${escapeHtml(l.title)}${lockNote}</h3>
-                    <p class="lesson-block-meta muted" style="margin:0.35rem 0 0;font-size:0.88rem">Quiz: ${l.quizCount} · Đã xong: ${l.completed ? 'Có' : 'Chưa'}</p>
-                  </div>
-                  <div class="lesson-block-player">${player}</div>
-                  <div class="lesson-block-actions">${doneBtn}</div>
-                </article>`;
-              })
-              .join('');
-
+            const pct = c.totalLessons > 0 ? Math.round((100 * c.completedLessons) / c.totalLessons) : 0;
             return `
-            <section class="card classroom-course-card" style="margin-bottom:1.25rem">
-              <h2>${escapeHtml(c.courseTitle)}</h2>
-              <p class="muted" style="margin:0 0 0.75rem">${escapeHtml(c.category || '')} · ${escapeHtml(c.level || '')}</p>
-              <p style="margin:0 0 1rem;font-size:0.9rem"><strong>Tiến độ:</strong> ${c.completedLessons}/${c.totalLessons} bài (${pct}%)</p>
-              <div class="classroom-lesson-list">${lessonBlocks}</div>
+            <section class="card classroom-course-card" style="margin-bottom:1.25rem" data-course-id="${c.courseId}">
+              <div class="row" style="justify-content:space-between; align-items:flex-start; gap:0.75rem; flex-wrap:wrap">
+                <div style="min-width:16rem; flex:1">
+                  <h2 style="margin:0">${escapeHtml(c.courseTitle)}</h2>
+                  <p class="muted" style="margin:0.35rem 0 0">${escapeHtml(c.category || '')} · ${escapeHtml(c.level || '')}</p>
+                  <p style="margin:0.6rem 0 0;font-size:0.9rem"><strong>Tiến độ:</strong> ${c.completedLessons}/${c.totalLessons} bài (${pct}%)</p>
+                </div>
+                <div class="row" style="gap:0.5rem; justify-content:flex-end">
+                  <a class="btn btn-primary" href="student/learn.html?courseId=${encodeURIComponent(String(c.courseId))}" data-action="open-course" data-course-id="${c.courseId}">
+                    Vào học
+                  </a>
+                </div>
+              </div>
             </section>`;
           })
           .join('');
@@ -937,6 +992,11 @@
     }
 
     mount.addEventListener('click', async (ev) => {
+      const openCourse = ev.target.closest('[data-action="open-course"]');
+      if (openCourse?.dataset.courseId) {
+        return; // let link navigate
+      }
+
       const openQuiz = ev.target.closest('[data-action="open-quiz"]');
       if (openQuiz?.dataset.lessonId) {
         ev.preventDefault();
@@ -1045,12 +1105,11 @@
     content.appendChild(
       el(`
       <div>
-        <span class="perm-hint student">Chọn khóa đã ghi danh, rồi xem bài học và quiz tương ứng</span>
         <div class="card">
           <h2>1 · Bài học trong một khóa</h2>
           <div class="row">
             <div class="field" style="width:140px;margin-bottom:0">
-              <label>Mã khóa học</label>
+              <label>Khóa học (số)</label>
               <input type="number" id="lrCourse" min="1" />
             </div>
             <button type="button" class="btn btn-primary" id="lrLessons">Tải danh sách bài</button>
@@ -1061,7 +1120,7 @@
           <h2>2 · Quiz của một bài học</h2>
           <div class="row">
             <div class="field" style="width:140px;margin-bottom:0">
-              <label>Mã bài học</label>
+              <label>Bài học (số)</label>
               <input type="number" id="lrLesson" min="1" />
             </div>
             <button type="button" class="btn btn-primary" id="lrQuizzes">Tải danh sách quiz</button>
@@ -1072,7 +1131,7 @@
           <h2>3 · Gửi điểm quiz</h2>
           <form id="lrSubmit">
             <div class="grid-2">
-              <div class="field"><label>Mã quiz</label><input name="quizId" type="number" min="1" required /></div>
+              <div class="field"><label>Quiz (số)</label><input name="quizId" type="number" min="1" required /></div>
               <div class="field"><label>Điểm (0–100)</label><input name="score" type="number" step="0.1" min="0" max="100" value="80" required /></div>
             </div>
             <input type="hidden" name="userId" value="${state.userId}" />
@@ -1087,7 +1146,7 @@
       const cid = content.querySelector('#lrCourse').value;
       const out = content.querySelector('#lrLessTable');
       if (!cid) {
-        out.innerHTML = '<p class="muted">Nhập mã khóa học.</p>';
+        out.innerHTML = '<p class="muted">Nhập số khóa học.</p>';
         return;
       }
       try {
@@ -1097,7 +1156,7 @@
           return;
         }
         out.innerHTML =
-          `<div class="table-wrap"><table><thead><tr><th>ID</th><th>Tiêu đề</th><th>Thứ tự</th><th>Phút</th></tr></thead><tbody>` +
+          `<div class="table-wrap"><table><thead><tr><th>#</th><th>Tiêu đề</th><th>Thứ tự</th><th>Phút</th></tr></thead><tbody>` +
           list.map((l) => `<tr><td>${l.id}</td><td>${escapeHtml(l.title)}</td><td>${l.orderIndex}</td><td>${l.duration}</td></tr>`).join('') +
           `</tbody></table></div>`;
       } catch (e) {
@@ -1109,7 +1168,7 @@
       const lid = content.querySelector('#lrLesson').value;
       const out = content.querySelector('#lrQuizTable');
       if (!lid) {
-        out.innerHTML = '<p class="muted">Nhập mã bài học.</p>';
+        out.innerHTML = '<p class="muted">Nhập số bài học.</p>';
         return;
       }
       try {
@@ -1119,7 +1178,7 @@
           return;
         }
         out.innerHTML =
-          `<div class="table-wrap"><table><thead><tr><th>ID</th><th>Tiêu đề</th></tr></thead><tbody>` +
+          `<div class="table-wrap"><table><thead><tr><th>#</th><th>Tiêu đề</th></tr></thead><tbody>` +
           list.map((q) => `<tr><td>${q.id}</td><td>${escapeHtml(q.title)}</td></tr>`).join('') +
           `</tbody></table></div>`;
       } catch (e) {
@@ -1152,14 +1211,13 @@
     content.appendChild(
       el(`
       <div>
-        <span class="perm-hint student">Mọi thao tác dùng mã học viên của bạn: ${state.userId}</span>
         <div class="card">
           <h2>Tiến độ bài học</h2>
           <button type="button" class="btn btn-ghost" id="trLoad">Tải lại tiến độ</button>
           <div id="trProg" style="margin-top:1rem"></div>
           <h3>Cập nhật tiến độ</h3>
           <form id="trUpsert" class="grid-2">
-            <div class="field"><label>Mã bài học</label><input name="lessonId" type="number" min="1" required /></div>
+            <div class="field"><label>Bài học (số)</label><input name="lessonId" type="number" min="1" required /></div>
             <div class="field"><label>Hoàn thành</label><select name="completed"><option value="true">Có</option><option value="false">Chưa</option></select></div>
             <input type="hidden" name="userId" value="${state.userId}" />
             <div style="grid-column:1/-1"><button type="submit" class="btn btn-primary">Lưu tiến độ</button></div>
@@ -1168,7 +1226,7 @@
         <div class="card">
           <h2>Nhật ký phiên học</h2>
           <form id="trLog" class="grid-2">
-            <div class="field"><label>Mã bài học</label><input name="lessonId" type="number" min="1" required /></div>
+            <div class="field"><label>Bài học (số)</label><input name="lessonId" type="number" min="1" required /></div>
             <div class="field"><label>Số phút học</label><input name="timeSpent" type="number" min="1" value="30" required /></div>
             <div class="field"><label>Điểm luyện tập (tuỳ chọn)</label><input name="score" type="number" step="0.1" placeholder="ví dụ: 72" /></div>
             <div class="field"><label>Lần thử thứ</label><input name="attempt" type="number" min="1" value="1" required /></div>
@@ -1244,7 +1302,6 @@
     content.appendChild(
       el(`
       <div>
-        <span class="perm-hint student">Gợi ý dựa trên ghi danh, điểm quiz và nhật ký học của bạn</span>
         <div class="grid-2">
           <div class="card">
             <h2>Tóm tắt học tập</h2>
@@ -1279,9 +1336,7 @@
     content.appendChild(
       el(`
       <div>
-        <span class="perm-hint staff">Chỉ nhân sự · Quản trị hoặc Giảng viên</span>
         <div class="stat-grid" id="admStats"></div>
-        <p class="muted" style="margin-top:1rem">Số liệu tải trực tiếp từ API. Học viên không thấy trang này.</p>
       </div>
     `)
     );
@@ -1303,7 +1358,6 @@
     grid.innerHTML = `
       <div class="stat"><div class="stat-value">${users}</div><div class="stat-label">Tài khoản đã đăng ký</div></div>
       <div class="stat"><div class="stat-value">${courses}</div><div class="stat-label">Khóa trong hệ thống</div></div>
-      <div class="stat"><div class="stat-value">${state.userId}</div><div class="stat-label">Mã nhân sự của bạn</div></div>
     `;
   }
 
@@ -1312,7 +1366,6 @@
     content.appendChild(
       el(`
       <div>
-        <span class="perm-hint staff">Danh bạ nhân sự · danh sách chỉ đọc từ GET /users</span>
         <div class="card">
           <h2>Tất cả thành viên</h2>
           <button type="button" class="btn btn-primary" id="memLoad">Tải lại danh sách</button>
@@ -1322,7 +1375,7 @@
           <h2>Chi tiết thành viên</h2>
           <form id="memOne" class="row">
             <div class="field" style="width:140px;margin-bottom:0">
-              <label>Mã người dùng</label>
+              <label>Số tài khoản</label>
               <input name="userId" type="number" min="1" required />
             </div>
             <button type="submit" class="btn btn-ghost">Lấy hồ sơ</button>
@@ -1342,7 +1395,7 @@
           return;
         }
         out.innerHTML =
-          `<div class="table-wrap"><table><thead><tr><th>ID</th><th>Tên đăng nhập</th><th>Vai trò</th><th>Tên</th><th>Email</th></tr></thead><tbody>` +
+          `<div class="table-wrap"><table><thead><tr><th>#</th><th>Tên đăng nhập</th><th>Vai trò</th><th>Tên</th><th>Email</th></tr></thead><tbody>` +
           list
             .map(
               (u) =>
@@ -1377,7 +1430,6 @@
     content.appendChild(
       el(`
       <div>
-        <span class="perm-hint staff">Thao tác khóa học gắn với tài khoản staff (creator ID). Chỉ trạng thái <strong>PUBLISHED</strong> mới hiện trên catalog học viên.</span>
         <div class="card admin-course-page">
           <div class="admin-course-toolbar">
             <h2>Danh sách khóa học</h2>
@@ -1385,7 +1437,7 @@
           <div class="admin-course-actions-bar">
             <div class="admin-course-search-wrap">
               <label for="adCourseSearch" class="visually-hidden">Tìm khóa học</label>
-              <input type="search" id="adCourseSearch" class="admin-course-search-input" placeholder="Tìm theo tiêu đề, ID, trạng thái, danh mục…" autocomplete="off" />
+              <input type="search" id="adCourseSearch" class="admin-course-search-input" placeholder="Tìm theo tiêu đề, trạng thái, danh mục…" autocomplete="off" />
             </div>
             <div class="admin-course-actions">
               <button type="button" class="btn btn-ghost" id="catBtnOpenManager" title="Thêm, sửa, xoá nhóm khóa học">Quản lý danh mục</button>
@@ -1393,7 +1445,6 @@
               <button type="button" class="btn btn-ghost" id="adCatLoad">Tải lại</button>
             </div>
           </div>
-          <p class="muted admin-course-hint">Dùng nút <strong>Sửa</strong> / <strong>Xoá</strong> cạnh tên khóa học. Ô tìm kiếm để lọc nhanh.</p>
           <div id="adCat"></div>
         </div>
         <div id="adCourseModal" class="admin-modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="adCourseModalTitle" aria-hidden="true">
@@ -1955,7 +2006,7 @@
       const fd = new FormData(e.target);
       const id = Number(content.querySelector('#adEditCourseId').value);
       if (!id) {
-        showAppAlert('Thiếu ID khóa học.', 'error');
+        showAppAlert('Chưa có thông tin khóa học.', 'error');
         return;
       }
       const body = {
@@ -2076,12 +2127,11 @@
     content.appendChild(
       el(`
       <div>
-        <span class="perm-hint staff">Tạo đánh giá và nhập điểm cho học viên (chấm điểm)</span>
         <div class="card">
           <h2>Tạo quiz cho bài học</h2>
           <form id="adQuiz" class="row">
             <div class="field" style="width:140px;margin-bottom:0">
-              <label>Mã bài học</label>
+              <label>Bài học (số)</label>
               <input name="lessonId" type="number" min="1" required />
             </div>
             <div class="field" style="flex:1;min-width:180px;margin-bottom:0">
@@ -2094,8 +2144,8 @@
         <div class="card">
           <h2>Ghi kết quả quiz (mọi học viên)</h2>
           <form id="adResult" class="grid-2">
-            <div class="field"><label>Mã học viên</label><input name="userId" type="number" min="1" required /></div>
-            <div class="field"><label>Mã quiz</label><input name="quizId" type="number" min="1" required /></div>
+            <div class="field"><label>Học viên (số)</label><input name="userId" type="number" min="1" required /></div>
+            <div class="field"><label>Quiz (số)</label><input name="quizId" type="number" min="1" required /></div>
             <div class="field" style="grid-column:1/-1"><label>Điểm</label><input name="score" type="number" step="0.1" min="0" max="100" value="75" required /></div>
             <div style="grid-column:1/-1"><button type="submit" class="btn btn-accent">Lưu kết quả</button></div>
           </form>
@@ -2183,7 +2233,7 @@
           window.location.href = 'admin.html';
           return;
         }
-        window.location.href = 'student/study-landing.html';
+        window.location.href = getSafeNextHrefFromQuery();
       } catch (err) {
         showGateAlert(gateErrorMessage(err), 'error');
       } finally {
@@ -2233,7 +2283,7 @@
         applyAuth(unwrap(data));
         showGateAlert('Đăng ký thành công — chào mừng đến StudyHub!', 'ok');
         setTimeout(() => {
-          window.location.href = 'student/study-landing.html';
+          window.location.href = getSafeNextHrefFromQuery();
         }, 400);
       } catch (err) {
         showGateAlert(gateErrorMessage(err), 'error');
@@ -2243,20 +2293,33 @@
     });
   }
 
-  function handleLogoutClick() {
+  /** Đăng xuất: xoá phiên + chuyển trang (capture để không bị menu/overlay chặn bubble). */
+  function performLogout() {
     clearSession();
     activeView = '';
     showAppAlert('');
     showGateAlert('');
-    if (document.body.dataset.appShell === 'admin' || document.body.dataset.appShell === 'student') {
-      window.location.href = 'index.html';
+    const sh = document.body && document.body.dataset && document.body.dataset.appShell;
+    const goIndex = () => {
+      try {
+        window.location.replace(new URL('index.html', document.baseURI).href);
+      } catch {
+        window.location.replace('index.html');
+      }
+    };
+    if (
+      sh === 'admin' ||
+      sh === 'student' ||
+      sh === 'study-landing' ||
+      sh === 'student-learn' ||
+      sh === 'student-explore-full' ||
+      sh === 'student-course-detail' ||
+      sh === 'student-mylearning-full'
+    ) {
+      goIndex();
       return;
     }
-    if (document.body.dataset.appShell === 'study-landing') {
-      window.location.href = 'index.html';
-      return;
-    }
-    if (document.body.dataset.appShell === 'landing') {
+    if (sh === 'landing') {
       exitToLandingGuestAfterLogout();
       return;
     }
@@ -2264,9 +2327,55 @@
     showGate();
   }
 
-  document.querySelectorAll('.js-logout').forEach((btn) => btn.addEventListener('click', handleLogoutClick));
+  /** Chuẩn hoá target: click đôi khi trả về Text node (không có .closest) → không tìm được .js-logout. */
+  function eventToElementTarget(ev) {
+    const t = ev && ev.target;
+    if (!t) return null;
+    if (t.nodeType === 1) {
+      return t;
+    }
+    if (t.nodeType === 3) {
+      return t.parentElement;
+    }
+    return t.parentElement;
+  }
+
+  document.addEventListener(
+    'click',
+    function onLogoutCapture(e) {
+      const el = eventToElementTarget(e);
+      if (!el || typeof el.closest !== 'function') return;
+      const btn = el.closest('.js-logout');
+      if (!btn) return;
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      performLogout();
+    },
+    true
+  );
 
   loadSession();
+  exposeRuntime();
+
+  // Standalone student pages: runtime + auth; my-learning cần update thanh màu/avatar.
+  if (SHELL === 'student-learn' || SHELL === 'student-mylearning-full') {
+    if (!isAuthenticated()) {
+      const next = encodeURIComponent(pathUnderAppForNextParam());
+      window.location.replace('index.html?auth=1&next=' + next);
+      return;
+    }
+    if (SHELL === 'student-mylearning-full') {
+      updateTopbar();
+      syncLandingNavForSession();
+    }
+    return;
+  }
+  if (SHELL === 'student-explore-full' || SHELL === 'student-course-detail') {
+    updateTopbar();
+    syncLandingNavForSession();
+    return;
+  }
   initGateTabs();
 
   const landingShell = document.body.dataset.appShell === 'landing';
@@ -2283,6 +2392,7 @@
         const url = new URL(window.location.href);
         url.searchParams.delete('auth');
         url.searchParams.delete('tab');
+        url.searchParams.delete('next');
         const qs = url.searchParams.toString();
         window.history.replaceState({}, '', url.pathname + (qs ? `?${qs}` : '') + url.hash);
         return;
@@ -2311,7 +2421,8 @@
     }
   } else if (studentShell) {
     if (!isAuthenticated()) {
-      window.location.replace('index.html?auth=1');
+      const next = encodeURIComponent(pathUnderAppForNextParam());
+      window.location.replace('index.html?auth=1&next=' + next);
     } else {
       showAppShell();
     }
@@ -2359,17 +2470,6 @@
     }
   }
 
-  if (studentShell && isAuthenticated()) {
-    try {
-      if (sessionStorage.getItem('studyhub_classroom_course')) {
-        sessionStorage.removeItem('studyhub_classroom_course');
-        showView('student-classroom');
-      }
-    } catch {
-      /* ignore */
-    }
-  }
-
   (function initStudentNavSearch() {
     const f = document.getElementById('studentSearchForm');
     if (!f || document.body.dataset.appShell !== 'student') return;
@@ -2377,8 +2477,8 @@
       e.preventDefault();
       const fd = new FormData(f);
       const q = String(fd.get('q') || '').trim();
-      sessionStorage.setItem('studyhub_explore_q', q);
-      showView('student-explore');
+      // Explore is a standalone page now.
+      window.location.href = `student/explore.html?q=${encodeURIComponent(q)}`;
     });
   })();
 
@@ -2422,7 +2522,15 @@
 
   (function initLandingUserMenu() {
     const sh = document.body.dataset.appShell;
-    if (sh !== 'landing' && sh !== 'study-landing') return;
+    if (
+      sh !== 'landing' &&
+      sh !== 'study-landing' &&
+      sh !== 'student-mylearning-full' &&
+      sh !== 'student-explore-full' &&
+      sh !== 'student-course-detail'
+    ) {
+      return;
+    }
     const btn = document.getElementById('landingUserMenuBtn');
     const menu = document.getElementById('landingUserDropdown');
     const wrap = btn?.closest('.student-user-menu-wrap');

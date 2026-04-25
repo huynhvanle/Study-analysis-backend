@@ -13,6 +13,97 @@
   const adCourseModal = root.querySelector('#adCourseModal');
   const adEditModal = root.querySelector('#adEditModal');
   const searchInput = root.querySelector('#adCourseSearch');
+  const createCourseForm = root.querySelector('#adCourse');
+  const editCourseForm = root.querySelector('#adCourseEdit');
+
+  function setupCoverImagePreview(inputEl) {
+    if (!inputEl) return { refresh: () => {} };
+    const field = inputEl.closest('.field') || inputEl.parentElement;
+    if (!field) return { refresh: () => {} };
+    if (field.querySelector('[data-cover-preview="1"]')) {
+      const existing = field.querySelector('[data-cover-preview="1"]');
+      const img = existing.querySelector('img');
+      const status = existing.querySelector('[data-cover-status="1"]');
+      return { refresh: (url) => refreshPreview(img, status, url ?? inputEl.value) };
+    }
+
+    const wrap = document.createElement('div');
+    wrap.dataset.coverPreview = '1';
+    wrap.style.marginTop = '0.5rem';
+    wrap.style.display = 'grid';
+    wrap.style.gridTemplateColumns = '120px 1fr';
+    wrap.style.gap = '0.75rem';
+    wrap.style.alignItems = 'start';
+
+    const img = document.createElement('img');
+    img.alt = 'Xem trước ảnh bìa';
+    img.decoding = 'async';
+    img.loading = 'lazy';
+    img.referrerPolicy = 'no-referrer';
+    img.style.width = '120px';
+    img.style.height = '72px';
+    img.style.objectFit = 'cover';
+    img.style.borderRadius = '12px';
+    img.style.border = '2px solid var(--border)';
+    img.style.background = '#f8fafc';
+
+    const meta = document.createElement('div');
+    meta.style.minWidth = '0';
+    const status = document.createElement('div');
+    status.dataset.coverStatus = '1';
+    status.className = 'muted';
+    status.style.fontSize = '0.82rem';
+    status.style.lineHeight = '1.35';
+    status.textContent = 'Nhập URL ảnh để xem trước.';
+    const hint = document.createElement('div');
+    hint.className = 'muted';
+    hint.style.fontSize = '0.78rem';
+    hint.style.marginTop = '0.15rem';
+    hint.textContent = 'Nếu hiện dấu “?” thường là URL lỗi hoặc bị chặn hotlink.';
+
+    meta.appendChild(status);
+    meta.appendChild(hint);
+    wrap.appendChild(img);
+    wrap.appendChild(meta);
+    field.appendChild(wrap);
+
+    function refreshPreview(imgEl, statusEl, rawUrl) {
+      const url = rawUrl ? String(rawUrl).trim() : '';
+      if (!url) {
+        imgEl.removeAttribute('src');
+        statusEl.textContent = 'Nhập URL ảnh để xem trước.';
+        statusEl.style.color = '';
+        return;
+      }
+      statusEl.textContent = 'Đang tải ảnh…';
+      statusEl.style.color = '';
+      const u = url.includes('?') ? `${url}&_pv=${Date.now()}` : `${url}?_pv=${Date.now()}`;
+      imgEl.onerror = () => {
+        statusEl.textContent = 'Không tải được ảnh. Kiểm tra URL (404), quyền truy cập, hoặc bị chặn hotlink.';
+        statusEl.style.color = 'var(--danger)';
+      };
+      imgEl.onload = () => {
+        statusEl.textContent = 'Ảnh tải OK.';
+        statusEl.style.color = 'var(--green)';
+      };
+      imgEl.src = u;
+    }
+
+    return { refresh: (url) => refreshPreview(img, status, url ?? inputEl.value) };
+  }
+
+  const createCoverInput = createCourseForm?.querySelector('[name="coverImageUrl"]') || null;
+  const editCoverInput = editCourseForm?.querySelector('[name="coverImageUrl"]') || null;
+  const createCoverPreview = setupCoverImagePreview(createCoverInput);
+  const editCoverPreview = setupCoverImagePreview(editCoverInput);
+  [createCoverInput, editCoverInput].forEach((inp) => {
+    if (!inp) return;
+    const pv = inp === createCoverInput ? createCoverPreview : editCoverPreview;
+    const refresh = () => pv.refresh();
+    inp.addEventListener('input', refresh);
+    inp.addEventListener('change', refresh);
+    inp.addEventListener('blur', refresh);
+  });
 
   const catManagerModal = root.querySelector('#catManagerModal');
   const catBtnOpenManager = root.querySelector('#catBtnOpenManager');
@@ -156,6 +247,7 @@
     document.addEventListener('keydown', escCloseCreateModal);
     const first = adCourseModal.querySelector('#adCourse input[name="title"]');
     if (first) first.focus();
+    createCoverPreview.refresh();
   }
 
   function closeCreateCourseModal() {
@@ -170,6 +262,7 @@
     document.addEventListener('keydown', escCloseEditModal);
     const first = adEditModal.querySelector('#adCourseEdit [name="title"]');
     if (first) first.focus();
+    editCoverPreview.refresh();
   }
 
   function closeEditModal() {
@@ -189,10 +282,18 @@
     }
     f.querySelector('[name="level"]').value = c.level || '';
     f.querySelector('[name="coverImageUrl"]').value = c.coverImageUrl || '';
+    editCoverPreview.refresh(c.coverImageUrl || '');
     f.querySelector('[name="language"]').value = c.language || '';
     const st = f.querySelector('[name="status"]');
     if (c.status && st.querySelector(`option[value="${c.status}"]`)) {
       st.value = c.status;
+    }
+    const at = f.querySelector('[name="accessTier"]');
+    if (at) {
+      const v = c.accessTier || 'FREE';
+      if (at.querySelector(`option[value="${v}"]`)) {
+        at.value = v;
+      }
     }
   }
 
@@ -207,6 +308,7 @@
       String(c.categoryId ?? ''),
       String(c.createdByUserId ?? ''),
       String(c.lessonCount ?? ''),
+      c.accessTier || '',
     ]
       .join(' ')
       .toLowerCase();
@@ -240,11 +342,13 @@
     }
 
     adCat.innerHTML =
-      `<div class="table-wrap"><table class="ad-course-table"><thead><tr><th>ID</th><th>Tiêu đề</th><th>Trạng thái</th><th>Bài học</th><th>Danh mục</th><th>Người tạo</th></tr></thead><tbody>` +
+      `<div class="table-wrap"><table class="ad-course-table"><thead><tr><th>ID</th><th>Tiêu đề</th><th>Gói</th><th>Trạng thái</th><th>Bài học</th><th>Danh mục</th><th>Người tạo</th></tr></thead><tbody>` +
       list
         .map(
           (c) =>
-            `<tr data-course-id="${c.id}"><td>${c.id}</td><td class="ad-course-title-cell">${titleCell(c)}</td><td>${escapeHtml(c.status || '')}</td><td>${c.lessonCount ?? '—'}</td><td>${escapeHtml(c.category || '')}</td><td>${c.createdByUserId}</td></tr>`
+            `<tr data-course-id="${c.id}"><td>${c.id}</td><td class="ad-course-title-cell">${titleCell(c)}</td><td>${escapeHtml(
+              c.accessTier || 'FREE'
+            )}</td><td>${escapeHtml(c.status || '')}</td><td>${c.lessonCount ?? '—'}</td><td>${escapeHtml(c.category || '')}</td><td>${c.createdByUserId}</td></tr>`
         )
         .join('') +
       `</tbody></table></div>`;
@@ -391,6 +495,8 @@
     form.reset();
     const st = form.querySelector('[name="status"]');
     if (st) st.value = 'PUBLISHED';
+    const at = form.querySelector('[name="accessTier"]');
+    if (at) at.value = 'FREE';
     if (hid) hid.value = String(window.StudyAdmin.getUserId() ?? '');
     root.querySelector('#adCourseOut').hidden = true;
     openCreateCourseModal();
@@ -415,6 +521,7 @@
       coverImageUrl: fd.get('coverImageUrl') || null,
       language: fd.get('language') || null,
       status: fd.get('status') || 'PUBLISHED',
+      accessTier: fd.get('accessTier') || 'FREE',
       createdByUserId: Number(fd.get('createdByUserId')),
     };
     const pre = root.querySelector('#adCourseOut');
@@ -441,7 +548,7 @@
     const fd = new FormData(e.target);
     const id = Number(root.querySelector('#adEditCourseId').value);
     if (!id) {
-      showAppAlert('Thiếu ID khóa học.', 'error');
+      showAppAlert('Chưa có thông tin khóa học.', 'error');
       return;
     }
     const body = {
@@ -452,6 +559,7 @@
       coverImageUrl: fd.get('coverImageUrl') || null,
       language: fd.get('language') || null,
       status: fd.get('status') || null,
+      accessTier: fd.get('accessTier') || 'FREE',
     };
     try {
       await request(`courses/${id}`, { method: 'PUT', body });

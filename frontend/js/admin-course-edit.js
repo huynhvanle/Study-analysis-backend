@@ -85,6 +85,92 @@
 
   let lastLessons = [];
 
+  function setupCoverImagePreview(inputEl) {
+    if (!inputEl) return { refresh: () => {} };
+    const field = inputEl.closest('.field') || inputEl.parentElement;
+    if (!field) return { refresh: () => {} };
+    if (field.querySelector('[data-cover-preview="1"]')) {
+      const existing = field.querySelector('[data-cover-preview="1"]');
+      const img = existing.querySelector('img');
+      const status = existing.querySelector('[data-cover-status="1"]');
+      return { refresh: (url) => refreshPreview(img, status, url ?? inputEl.value) };
+    }
+
+    const wrap = document.createElement('div');
+    wrap.dataset.coverPreview = '1';
+    wrap.style.marginTop = '0.5rem';
+    wrap.style.display = 'grid';
+    wrap.style.gridTemplateColumns = '120px 1fr';
+    wrap.style.gap = '0.75rem';
+    wrap.style.alignItems = 'start';
+
+    const img = document.createElement('img');
+    img.alt = 'Xem trước ảnh bìa';
+    img.decoding = 'async';
+    img.loading = 'lazy';
+    img.referrerPolicy = 'no-referrer';
+    img.style.width = '120px';
+    img.style.height = '72px';
+    img.style.objectFit = 'cover';
+    img.style.borderRadius = '12px';
+    img.style.border = '2px solid var(--border)';
+    img.style.background = '#f8fafc';
+
+    const meta = document.createElement('div');
+    meta.style.minWidth = '0';
+    const status = document.createElement('div');
+    status.dataset.coverStatus = '1';
+    status.className = 'muted';
+    status.style.fontSize = '0.82rem';
+    status.style.lineHeight = '1.35';
+    status.textContent = 'Nhập URL ảnh để xem trước.';
+    const hint = document.createElement('div');
+    hint.className = 'muted';
+    hint.style.fontSize = '0.78rem';
+    hint.style.marginTop = '0.15rem';
+    hint.textContent = 'Nếu hiện dấu “?” thường là URL lỗi hoặc bị chặn hotlink.';
+
+    meta.appendChild(status);
+    meta.appendChild(hint);
+    wrap.appendChild(img);
+    wrap.appendChild(meta);
+    field.appendChild(wrap);
+
+    function refreshPreview(imgEl, statusEl, rawUrl) {
+      const url = rawUrl ? String(rawUrl).trim() : '';
+      if (!url) {
+        imgEl.removeAttribute('src');
+        statusEl.textContent = 'Nhập URL ảnh để xem trước.';
+        statusEl.style.color = '';
+        return;
+      }
+      statusEl.textContent = 'Đang tải ảnh…';
+      statusEl.style.color = '';
+      // Bust cache a bit while editing to surface failures quickly.
+      const u = url.includes('?') ? `${url}&_pv=${Date.now()}` : `${url}?_pv=${Date.now()}`;
+      imgEl.onerror = () => {
+        statusEl.textContent = 'Không tải được ảnh. Kiểm tra URL (404), quyền truy cập, hoặc bị chặn hotlink.';
+        statusEl.style.color = 'var(--danger)';
+      };
+      imgEl.onload = () => {
+        statusEl.textContent = 'Ảnh tải OK.';
+        statusEl.style.color = 'var(--green)';
+      };
+      imgEl.src = u;
+    }
+
+    return { refresh: (url) => refreshPreview(img, status, url ?? inputEl.value) };
+  }
+
+  const coverInput = form.querySelector('[name="coverImageUrl"]');
+  const coverPreview = setupCoverImagePreview(coverInput);
+  if (coverInput) {
+    const refresh = () => coverPreview.refresh();
+    coverInput.addEventListener('input', refresh);
+    coverInput.addEventListener('change', refresh);
+    coverInput.addEventListener('blur', refresh);
+  }
+
   async function loadCategoriesAndFillSelect(selectedId) {
     const cats = await request('course-categories', { method: 'GET' });
     const sorted = Array.isArray(cats)
@@ -105,10 +191,18 @@
     form.querySelector('[name="description"]').value = c.description || '';
     form.querySelector('[name="level"]').value = c.level || '';
     form.querySelector('[name="coverImageUrl"]').value = c.coverImageUrl || '';
+    coverPreview.refresh(c.coverImageUrl || '');
     form.querySelector('[name="language"]').value = c.language || '';
     const st = form.querySelector('[name="status"]');
     if (c.status && st.querySelector(`option[value="${c.status}"]`)) {
       st.value = c.status;
+    }
+    const at = form.querySelector('[name="accessTier"]');
+    if (at) {
+      const v = c.accessTier || 'FREE';
+      if (at.querySelector(`option[value="${v}"]`)) {
+        at.value = v;
+      }
     }
   }
 
@@ -143,7 +237,7 @@
               ` data-title="${escapeHtml(l.title || '')}"` +
               ` data-content-url="${escapeHtml(u)}"` +
               ` data-order-index="${Number(l.orderIndex) || 1}"` +
-              ` data-duration="${Number(l.duration) || 15}">` +
+              ` data-duration="${Number(l.duration) || 15}"` +
               ` data-kind="${escapeHtml(kind)}"` +
               ` data-quiz-id="${Number(l.quizId) || 0}">` +
               `<td>${l.orderIndex}</td>` +
@@ -236,11 +330,13 @@
 
   if (lessonsMount) {
     lessonsMount.addEventListener('click', async (ev) => {
-      const row = ev.target.closest('tr[data-lesson-id]');
+      const target = ev.target instanceof Element ? ev.target : ev.target?.parentElement;
+      if (!target) return;
+      const row = target.closest('tr[data-lesson-id]');
       if (!row) return;
       const lessonId = Number(row.dataset.lessonId);
       if (!lessonId) return;
-      const act = ev.target.closest('[data-action]')?.dataset?.action;
+      const act = target.closest('[data-action]')?.dataset?.action;
       if (!act) return;
 
       if (act === 'open-quiz-questions') {
@@ -275,6 +371,20 @@
       }
     });
   }
+
+  // Fallback: bắt click toàn trang để tránh các trường hợp event target lạ / DOM thay đổi.
+  // (Ví dụ: table được render lại trong wrapper khác ngoài lessonsMount.)
+  document.addEventListener('click', (ev) => {
+    const target = ev.target instanceof Element ? ev.target : ev.target?.parentElement;
+    if (!target) return;
+    const btn = target.closest('[data-action="lesson-edit"]');
+    if (!btn) return;
+    const row = btn.closest('tr[data-lesson-id]');
+    const lessonId = Number(row?.dataset?.lessonId);
+    if (!row || !lessonId) return;
+    ev.preventDefault();
+    openEditLesson(lessonId, row);
+  });
 
   // Legacy helpers kept for compatibility with older HTML that still contains quiz modal.
   async function loadQuizzesForCourse() {
@@ -354,7 +464,7 @@
     showAppAlert('');
     const id = Number(idEl.value);
     if (!id) {
-      showAppAlert('Thiếu ID khóa học.', 'error');
+      showAppAlert('Chưa có thông tin khóa học.', 'error');
       return;
     }
     const fd = new FormData(form);
@@ -366,6 +476,7 @@
       coverImageUrl: fd.get('coverImageUrl') || null,
       language: fd.get('language') || null,
       status: fd.get('status') || null,
+      accessTier: fd.get('accessTier') || 'FREE',
     };
     try {
       await request(`courses/${id}`, { method: 'PUT', body });

@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/app.css?v=33" />
+  <link rel="stylesheet" href="css/app.css?v=45" />
 </head>
 <body class="landing-body" data-app-shell="study-landing">
   <div class="landing-page" id="landingRoot">
@@ -19,8 +19,12 @@
           <a href="student/study-landing.html" class="landing-logo">StudyHub</a>
 
           <nav class="landing-nav-links" aria-label="Menu chính">
-            <button type="button" class="landing-nav-pill" aria-expanded="false" disabled title="Sắp có">Khám phá ▾</button>
-            <button type="button" class="landing-nav-pill" aria-expanded="false" disabled title="Sắp có">Lộ trình ▾</button>
+            <a href="student/explore.html" class="landing-nav-pill" aria-label="Khám phá khóa học">Khám phá</a>
+            <a
+              href="student/my-learning.html"
+              class="landing-nav-pill"
+              aria-label="Lớp của tôi — danh sách khóa đang học"
+            >Lớp của tôi</a>
           </nav>
 
           <form class="landing-search" id="landingSearchForm" role="search" aria-label="Tìm khóa học (demo)">
@@ -78,56 +82,60 @@
           <article class="landing-banner landing-banner--plus">
             <span class="landing-banner-badge">Ưu đãi</span>
             <h2 class="landing-banner-title">Gói StudyHub Plus</h2>
-            <p class="landing-banner-text">Truy cập không giới hạn bài học &amp; quiz — phù hợp học viên nghiêm túc.</p>
             <a href="index.html?auth=1&amp;tab=register" class="btn btn-primary landing-banner-cta" id="landingCtaPrimary">Bắt đầu miễn phí →</a>
-          </article>
-          <article class="landing-banner landing-banner--biz">
-            <span class="landing-banner-badge landing-banner-badge--light">Nhóm</span>
-            <h2 class="landing-banner-title">StudyHub cho đội ngũ</h2>
-            <p class="landing-banner-text">Quản lý khóa học, theo dõi tiến độ và báo cáo cho doanh nghiệp.</p>
-            <a href="index.html?auth=1" class="btn btn-landing-inverse landing-banner-cta">Tìm hiểu cho doanh nghiệp →</a>
           </article>
         </div>
         <p class="landing-search-hint landing-inner" id="landingSearchHint" hidden></p>
       </section>
 
-      <p class="landing-note landing-inner" id="landingSessionHint" hidden></p>
-
-      <section class="landing-quick" aria-label="Bắt đầu nhanh">
-        <div class="landing-inner landing-quick-grid">
-          <a href="index.html?auth=1&amp;tab=register" class="landing-quick-card">
-            <span class="landing-quick-title">Khởi nghiệp kỹ năng mới</span>
-            <span class="landing-quick-desc">Chứng chỉ &amp; lộ trình gợi ý theo mục tiêu của bạn.</span>
-          </a>
-          <a href="index.html?auth=1" class="landing-quick-card">
-            <span class="landing-quick-title">StudyHub cho doanh nghiệp</span>
-            <span class="landing-quick-desc">Đào tạo nội bộ, báo cáo tiến độ theo nhóm.</span>
-          </a>
-          <a href="index.html?auth=1&amp;tab=register" class="landing-quick-card">
-            <span class="landing-quick-title">Lộ trình học tập dài hạn</span>
-            <span class="landing-quick-desc">Học có thứ tự, mở bài mới khi hoàn thành bài trước.</span>
-          </a>
-        </div>
-      </section>
-
-      <section class="landing-partners" aria-labelledby="partners-heading">
+      <section
+        class="landing-welcome-block"
+        id="landingWelcomeBlock"
+        aria-labelledby="landingWelcomeHeading"
+      >
         <div class="landing-inner">
-          <h2 class="landing-section-title" id="partners-heading">Học cùng nội dung và quy trình được tin dùng</h2>
-          <p class="landing-section-sub">Đối tác minh họa — tích hợp API Spring Boot &amp; giao diện tĩnh của bạn.</p>
-          <div class="landing-partners-track" role="list">
-            <span class="landing-partner-logo" role="listitem">Google</span>
-            <span class="landing-partner-logo" role="listitem">IBM</span>
-            <span class="landing-partner-logo" role="listitem">Microsoft</span>
-            <span class="landing-partner-logo" role="listitem">Stanford</span>
-            <span class="landing-partner-logo" role="listitem">DeepLearning.AI</span>
-            <span class="landing-partner-logo" role="listitem">Meta</span>
-          </div>
+          <h1 class="landing-welcome-headline" id="landingWelcomeHeading">
+            Xin chào, <span id="landingWelcomeName">bạn</span>
+          </h1>
+          <p class="landing-welcome-lead" id="landingWelcomeLead">Đang tải gợi ý học tiếp…</p>
+        </div>
+        <div class="landing-inner landing-continue-outer" id="landingContinueOuter" hidden>
+          <article class="landing-continue-card" id="landingContinueCard" aria-label="Gợi ý học tiếp">
+            <div class="landing-continue-main">
+              <div
+                class="landing-continue-ring-wrap"
+                id="landingContinueRingWrap"
+                aria-label="Phần trăm hoàn thành khóa"
+              >
+                <div class="landing-continue-ring" id="landingContinueRing" style="--pct: 0"></div>
+                <span class="landing-continue-ring-pct" id="landingContinuePct">0%</span>
+              </div>
+              <div class="landing-continue-course-block">
+                <h2 class="landing-continue-course-title" id="landingContinueCourseTitle">—</h2>
+                <p class="landing-continue-course-meta muted" id="landingContinueCourseMeta"></p>
+                <a
+                  class="btn btn-primary landing-continue-cta"
+                  id="landingContinueCta"
+                  href="student/explore.html"
+                  >Học tiếp</a
+                >
+              </div>
+            </div>
+            <div class="landing-continue-upnext" id="landingContinueUpNext">
+              <p class="landing-continue-upnext-kicker">Tiếp theo</p>
+              <p class="landing-continue-upnext-title" id="landingContinueLessonTitle">—</p>
+              <p class="muted landing-continue-upnext-meta" id="landingContinueLessonMeta"></p>
+            </div>
+          </article>
         </div>
       </section>
 
       <section class="landing-my-learning" aria-labelledby="landing-my-learning-title">
         <div class="landing-inner">
-          <h2 class="landing-explore-cats-title" id="landing-my-learning-title">Khóa học đang học</h2>
+          <div class="row" style="justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:0.5rem">
+            <h2 class="landing-explore-cats-title" id="landing-my-learning-title" style="margin:0">Khóa học đang học</h2>
+            <a href="student/my-learning.html" class="muted" style="font-size:0.95rem; white-space:nowrap">Toàn bộ trang Lớp của tôi →</a>
+          </div>
           <p class="landing-section-sub" id="landingMyLearningGuestHint">
             <a href="index.html?auth=1">Đăng nhập</a> để xem tiến độ các khóa đã ghi danh.
           </p>
@@ -152,21 +160,22 @@
         </div>
       </section>
 
-      <section class="landing-featured-wrap" aria-labelledby="landing-featured-heading">
+      <section class="landing-featured-wrap landing-collections" aria-labelledby="landing-featured-heading">
         <div class="landing-inner">
-          <div class="landing-featured-banner">
-            <div class="landing-featured-layout">
-              <div class="landing-featured-aside">
-                <p class="landing-featured-eyebrow">StudyHub</p>
-                <h2 class="landing-featured-heading" id="landing-featured-heading">Khóa học nổi bật</h2>
-                <p class="landing-featured-lead">Lựa chọn từ catalog công khai — đăng nhập để ghi danh.</p>
-                <a href="student/student.html" class="landing-featured-cta">Khám phá khóa học →</a>
-              </div>
-              <div class="landing-featured-rail" tabindex="0" role="region" aria-label="Danh sách khóa học nổi bật">
-                <div id="landingCatalogGrid" class="landing-featured-track">
-                  <p class="muted landing-featured-loading" id="landingCatalogLoading">Đang tải khóa học…</p>
-                </div>
-              </div>
+          <header class="landing-collections-head">
+            <div>
+              <h2 class="landing-collections-title" id="landing-featured-heading">Khóa học nổi bật</h2>
+            </div>
+            <a href="student/explore.html" class="landing-collections-all">Xem tất cả</a>
+          </header>
+          <div
+            class="landing-featured-rail landing-collections-rail"
+            tabindex="0"
+            role="region"
+            aria-label="Danh sách khóa học nổi bật"
+          >
+            <div id="landingCatalogGrid" class="landing-featured-track">
+              <p class="muted landing-featured-loading" id="landingCatalogLoading">Đang tải khóa học…</p>
             </div>
           </div>
         </div>
@@ -272,7 +281,7 @@
     </div>
   </div>
 
-  <script src="js/landing.js?v=33"></script>
-  <script src="js/app.js?v=33"></script>
+  <script src="js/landing.js?v=40"></script>
+  <script src="js/app.js?v=46"></script>
 </body>
 </html>

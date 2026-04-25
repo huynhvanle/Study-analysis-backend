@@ -1,6 +1,7 @@
 package com.web.study_analysis.study_business.course.dto;
 
 import com.web.study_analysis.study_business.course.entity.CourseStatus;
+import com.web.study_analysis.study_business.tier.SubscriptionTier;
 import lombok.Data;
 
 /** Cập nhật từng phần — chỉ trường khác null mới được áp dụng. */
@@ -16,4 +17,5 @@ public class CourseUpdateRequest {
     private CourseStatus status;
     private String language;
     private String tags;
+    private SubscriptionTier accessTier;
 }

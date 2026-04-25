@@ -84,6 +84,9 @@ public class UserService {
             }
             user.setEmail(email);
         }
+        if (uRequest.getPlan() != null) {
+            user.setPlan(uRequest.getPlan());
+        }
         return userMapper.toUserReponse(userRepository.save(user));
     }
 

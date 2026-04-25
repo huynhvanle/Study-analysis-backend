@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <base href="/study-analysis/" />
+  <meta name="api-root" content="/study-analysis" />
+  <title>StudyHub — Học bài</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/app.css?v=37" />
+</head>
+<body data-app-shell="student-learn">
+  <div id="alert" class="banner" role="status" hidden></div>
+
+  <div class="learn-layout">
+    <aside class="learn-sidebar" aria-label="Danh sách bài học">
+      <div class="learn-sidebar-head">
+        <a href="student/my-learning.html" class="btn btn-ghost btn-sm" id="btnBackToClassroom">← Lớp của tôi</a>
+        <div class="learn-course-meta">
+          <div class="learn-course-title" id="learnCourseTitle">—</div>
+          <div class="muted" style="font-size:0.82rem" id="learnCourseSub">—</div>
+        </div>
+      </div>
+      <div class="learn-lesson-list" id="learnLessonList">
+        <p class="muted" style="margin:0.75rem">Đang tải…</p>
+      </div>
+    </aside>
+
+    <main class="learn-main" aria-label="Nội dung bài học">
+      <header class="learn-topbar">
+        <div class="learn-lesson-title-wrap">
+          <div class="learn-lesson-kicker muted">Bài học</div>
+          <h1 class="learn-lesson-title" id="learnLessonTitle">—</h1>
+        </div>
+        <div class="learn-actions">
+          <button type="button" class="btn btn-primary btn-sm" id="btnMarkDone">Đánh dấu hoàn thành</button>
+        </div>
+      </header>
+
+      <section class="learn-player" id="learnPlayer">
+        <p class="muted" style="margin:0">Chọn một bài ở danh sách bên trái.</p>
+      </section>
+    </main>
+  </div>
+
+  <style>
+    body[data-app-shell="student-learn"] {
+      margin: 0;
+      min-height: 100vh;
+      background: #f7fbff;
+      color: var(--text);
+      font-family: var(--font);
+    }
+    .learn-layout {
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      min-height: 100vh;
+    }
+    .learn-sidebar {
+      border-right: 1px solid var(--border);
+      background: #fff;
+      display: flex;
+      flex-direction: column;
+      min-width: 280px;
+    }
+    .learn-sidebar-head {
+      padding: 0.9rem 1rem 0.75rem;
+      border-bottom: 1px solid var(--border);
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 0.75rem;
+      align-items: start;
+    }
+    .learn-course-meta { min-width: 0; }
+    .learn-course-title {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 1rem;
+      line-height: 1.25;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .learn-lesson-list {
+      padding: 0.5rem 0.5rem 1rem;
+      overflow: auto;
+      flex: 1;
+    }
+    .learn-lesson-item {
+      width: 100%;
+      text-align: left;
+      border: 2px solid transparent;
+      background: #fff;
+      border-radius: 12px;
+      padding: 0.65rem 0.7rem;
+      cursor: pointer;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 0.5rem;
+      align-items: start;
+      margin: 0.35rem 0;
+    }
+    .learn-lesson-item:hover { border-color: #dbeafe; background: #fbfdff; }
+    .learn-lesson-item.active { border-color: var(--primary); box-shadow: 0 10px 28px rgba(11,108,203,0.10); }
+    .learn-lesson-item-title { font-weight: 650; font-size: 0.92rem; line-height: 1.35; }
+    .learn-lesson-item-meta { font-size: 0.78rem; color: var(--muted); margin-top: 0.25rem; }
+    .learn-pill {
+      font-size: 0.72rem;
+      padding: 0.2rem 0.45rem;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      color: #334155;
+      background: #f8fafc;
+      white-space: nowrap;
+    }
+    .learn-pill.done { border-color: #bbf7d0; background: #ecfdf5; color: #047857; }
+    .learn-pill.locked { border-color: #fde68a; background: #fffbeb; color: #92400e; }
+    .learn-main {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      background: linear-gradient(160deg, #eff6ff 0%, #f8fafc 60%, #fff7ed 100%);
+    }
+    .learn-topbar {
+      background: rgba(255,255,255,0.88);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid rgba(203,213,225,0.7);
+      padding: 0.9rem 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+    .learn-lesson-title {
+      margin: 0.12rem 0 0;
+      font-family: var(--font-display);
+      font-weight: 750;
+      font-size: 1.15rem;
+      line-height: 1.25;
+    }
+    .learn-player {
+      padding: 1.1rem 1.25rem 1.5rem;
+      flex: 1;
+      min-height: 0;
+    }
+    .learn-player .lesson-player iframe,
+    .learn-player .lesson-player video {
+      width: 100%;
+      height: min(68vh, 720px);
+      border-radius: 14px;
+    }
+    @media (max-width: 980px) {
+      .learn-layout { grid-template-columns: 1fr; }
+      .learn-sidebar { display: none; }
+    }
+  </style>
+
+  <script src="js/app.js?v=46"></script>
+  <script src="js/student-learn.js?v=9"></script>
+</body>
+</html>
+

@@ -12,6 +12,7 @@ import com.web.study_analysis.study_business.course.entity.CourseStatus;
 import com.web.study_analysis.study_business.course.repository.CourseCategoryRepository;
 import com.web.study_analysis.study_business.lesson.entity.Lesson;
 import com.web.study_analysis.study_business.course.repository.CourseRepository;
+import com.web.study_analysis.study_business.tier.SubscriptionTier;
 import com.web.study_analysis.study_business.enrollment.repository.EnrollmentRepository;
 import com.web.study_analysis.study_business.lesson.repository.LessonRepository;
 import com.web.study_analysis.study_business.progress.repository.ProgressRepository;
@@ -50,6 +51,7 @@ public class CourseService {
         CourseCategory category = courseCategoryRepository.findById(request.getCategoryId())
                 .orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_FOUND));
         CourseStatus status = request.getStatus() != null ? request.getStatus() : CourseStatus.PUBLISHED;
+        SubscriptionTier tier = request.getAccessTier() != null ? request.getAccessTier() : SubscriptionTier.FREE;
         String baseSlug = request.getSlug() != null && !request.getSlug().isBlank()
                 ? CourseSlugHelper.slugify(request.getSlug())
                 : CourseSlugHelper.slugify(request.getTitle());
@@ -63,6 +65,7 @@ public class CourseService {
                 .coverImageUrl(request.getCoverImageUrl())
                 .slug(slug)
                 .status(status)
+                .accessTier(tier)
                 .language(request.getLanguage())
                 .tags(normalizeTags(request.getTags()))
                 .createdBy(creator)
@@ -110,6 +113,9 @@ public class CourseService {
                 }
                 c.setSlug(want);
             }
+        }
+        if (request.getAccessTier() != null) {
+            c.setAccessTier(request.getAccessTier());
         }
         return toResponse(courseRepository.save(c));
     }
@@ -213,6 +219,7 @@ public class CourseService {
                 .level(c.getLevel())
                 .coverImageUrl(c.getCoverImageUrl())
                 .slug(c.getSlug())
+                .accessTier(c.getAccessTier() != null ? c.getAccessTier() : SubscriptionTier.FREE)
                 .status(c.getStatus())
                 .publishedAt(c.getPublishedAt())
                 .language(c.getLanguage())

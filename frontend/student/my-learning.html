@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <base href="/study-analysis/" />
+  <meta name="api-root" content="/study-analysis" />
+  <title>StudyHub — Lớp của tôi</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/app.css?v=41" />
+</head>
+<body class="landing-body" data-app-shell="student-mylearning-full">
+  <div class="landing-page" id="landingRoot">
+    <div id="landingChrome">
+      <header class="landing-sticky">
+        <div class="landing-inner landing-nav-row">
+          <a href="student/study-landing.html" class="landing-logo">StudyHub</a>
+
+          <nav class="landing-nav-links" aria-label="Menu chính">
+            <a href="student/explore.html" class="landing-nav-pill" aria-label="Khám phá khóa học">Khám phá</a>
+            <span
+              class="landing-nav-pill landing-nav-pill--current"
+              aria-current="page"
+              title="Bạn đang ở Lớp của tôi"
+            >Lớp của tôi</span>
+          </nav>
+
+          <form class="landing-search" id="landingSearchForm" role="search" aria-label="Tìm khóa học (demo)">
+            <span class="landing-search-icon" aria-hidden="true">🔍</span>
+            <input
+              type="search"
+              name="q"
+              class="landing-search-input"
+              placeholder="Tìm kỹ năng, chứng chỉ hoặc khóa học…"
+              autocomplete="off"
+            />
+          </form>
+
+          <div class="landing-nav-actions" id="landingNavGuest">
+            <a href="index.html?auth=1" class="landing-link-login">Đăng nhập</a>
+            <a href="index.html?auth=1&amp;tab=register" class="btn btn-outline-landing btn-sm">Tham gia miễn phí</a>
+          </div>
+
+          <div class="landing-nav-actions" id="landingNavStudent" hidden>
+            <div class="student-user-menu-wrap">
+              <button
+                type="button"
+                id="landingUserMenuBtn"
+                class="student-nav-avatar-btn"
+                aria-expanded="false"
+                aria-controls="landingUserDropdown"
+                aria-haspopup="true"
+                aria-label="Menu tài khoản"
+              >
+                <span id="landingUserAvatar" class="student-avatar-circle">?</span>
+              </button>
+              <div id="landingUserDropdown" class="student-user-dropdown hidden" role="menu" aria-labelledby="landingUserMenuBtn">
+                <div class="student-user-dropdown-profile">
+                  <span id="landingUserDisplayName" class="student-dropdown-name">—</span>
+                  <span id="landingUserDisplayId" class="student-dropdown-id">—</span>
+                  <span id="landingRoleBadge" class="role-badge student"></span>
+                </div>
+                <div class="student-dropdown-sep" role="separator"></div>
+                <p class="student-dropdown-section-label">Thông tin</p>
+                <a href="student/student.html" role="menuitem" class="student-dropdown-item">Hồ sơ &amp; học tập</a>
+                <div class="student-dropdown-sep" role="separator"></div>
+                <button type="button" role="menuitem" class="student-dropdown-item student-dropdown-item--danger js-logout">Đăng xuất</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+    </div>
+
+    <main class="mylearning-page-main">
+      <div class="landing-inner" style="padding:1.5rem 0 2.5rem; max-width: 880px">
+        <div class="row" style="justify-content:space-between; align-items:flex-start; gap:1rem; flex-wrap:wrap; margin-bottom:0.5rem">
+          <div>
+            <h1 class="mylearning-title">Lớp của tôi</h1>
+            <p class="muted" style="margin:0.35rem 0 0">Các khóa bạn đã ghi danh — ấn vào thẻ khóa để vào trang học bài.</p>
+          </div>
+          <a href="student/study-landing.html" class="btn btn-ghost">← Trang chủ</a>
+        </div>
+        <p id="myLearningStatus" class="muted" style="margin:0.5rem 0" role="status"></p>
+        <ul id="myLearningList" class="mylearning-list" role="list" aria-label="Khóa đang học"></ul>
+      </div>
+    </main>
+  </div>
+
+  <script src="js/app.js?v=46"></script>
+  <script src="js/student-my-learning.js?v=4"></script>
+</body>
+</html>

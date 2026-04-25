@@ -1,6 +1,7 @@
 package com.web.study_analysis.study_business.course.dto;
 
 import com.web.study_analysis.study_business.course.entity.CourseStatus;
+import com.web.study_analysis.study_business.tier.SubscriptionTier;
 import lombok.Builder;
 import lombok.Data;
 
@@ -19,6 +20,8 @@ public class CourseResponse {
     private String level;
     private String coverImageUrl;
     private String slug;
+    /** FREE: mọi user; PLUS: cần gói Plus. */
+    private SubscriptionTier accessTier;
     private CourseStatus status;
     private LocalDateTime publishedAt;
     private String language;

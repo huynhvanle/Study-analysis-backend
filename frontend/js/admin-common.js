@@ -147,7 +147,10 @@
     const un = document.getElementById('userDisplayName');
     if (un) un.textContent = state.name || state.username || 'Người dùng';
     const uid = document.getElementById('userDisplayId');
-    if (uid) uid.textContent = 'ID ' + state.userId;
+    if (uid) {
+      uid.textContent = '';
+      uid.hidden = true;
+    }
   }
 
   function escapeHtml(s) {

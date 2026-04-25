@@ -11,6 +11,8 @@ import java.time.LocalDateTime;
 public class LessonProgressItemResponse {
     private Long lessonId;
     private String title;
+    /** VIDEO / QUIZ (matches LessonKind). */
+    private String kind;
     private String contentUrl;
     private Integer orderIndex;
     private Integer durationMinutes;

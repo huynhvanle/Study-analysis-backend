@@ -82,4 +82,10 @@ public class QuizController {
     public QuizSubmitResponse submitQuiz(@PathVariable Long quizId, @Valid @RequestBody QuizSubmitRequest request) {
         return quizService.submitAnswers(quizId, request);
     }
+
+    /** Student: xem điểm đã nộp gần nhất (nếu có). */
+    @GetMapping("/quizzes/{quizId}/users/{userId}/latest-score")
+    public Float latestScore(@PathVariable Long quizId, @PathVariable Long userId) {
+        return quizService.getLatestScore(userId, quizId);
+    }
 }

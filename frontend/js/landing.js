@@ -81,6 +81,115 @@
     }
   }
 
+  function displayNameFromLocalSession() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return 'bạn';
+      const s = JSON.parse(raw);
+      const n = s.name && String(s.name).trim();
+      if (n) return n;
+      const u = s.username && String(s.username).trim();
+      if (u) return u;
+      return 'bạn';
+    } catch {
+      return 'bạn';
+    }
+  }
+
+  function lessonKindLabelVi(kind) {
+    const k = String(kind || '').toUpperCase();
+    if (k === 'QUIZ' || k.includes('QUIZ')) return 'Quiz';
+    if (k === 'VIDEO' || k.includes('VIDEO')) return 'Video';
+    return 'Bài học';
+  }
+
+  function lessonUpNextMeta(lesson) {
+    const k = lessonKindLabelVi(lesson && lesson.kind);
+    const m = lesson && lesson.durationMinutes != null ? Number(lesson.durationMinutes) : null;
+    if (m != null && !Number.isNaN(m) && m > 0) {
+      return k + ' · ' + m + ' phút';
+    }
+    return k;
+  }
+
+  /**
+   * Chọn khóa + bài tiếp theo: bài mở khóa đầu tiên chưa xong; nếu mọi bài đã xong thì gợi ý xem lại bài đầu.
+   */
+  function pickContinueState(courses) {
+    if (!Array.isArray(courses) || !courses.length) return null;
+    for (const c of courses) {
+      const lessons = Array.isArray(c.lessons) ? c.lessons : [];
+      if (!lessons.length) continue;
+      const total = Math.max(1, Number(c.totalLessons) || lessons.length);
+      const done = Math.min(total, Math.max(0, Number(c.completedLessons) || 0));
+      const percent = Math.min(100, Math.round((done / total) * 100));
+      const next = lessons.find((l) => l.unlocked && !l.completed);
+      if (next) {
+        return { course: c, nextLesson: next, percent, allComplete: false };
+      }
+    }
+    const c = courses[0];
+    const lessons = Array.isArray(c.lessons) ? c.lessons : [];
+    if (!lessons.length) return null;
+    const first = lessons[0];
+    const total = Math.max(1, Number(c.totalLessons) || lessons.length);
+    return { course: c, nextLesson: first, percent: 100, allComplete: true };
+  }
+
+  function setContinueRing(percent) {
+    const ring = document.getElementById('landingContinueRing');
+    const label = document.getElementById('landingContinuePct');
+    const p = Math.max(0, Math.min(100, Number(percent) || 0)) / 100;
+    if (ring) ring.style.setProperty('--pct', String(p));
+    if (label) label.textContent = Math.round(p * 100) + '%';
+  }
+
+  function fillWelcomeAndContinue(courses) {
+    const nameEl = document.getElementById('landingWelcomeName');
+    const lead = document.getElementById('landingWelcomeLead');
+    const outer = document.getElementById('landingContinueOuter');
+    if (document.body.dataset.appShell !== 'study-landing' || !nameEl || !lead) return;
+    nameEl.textContent = displayNameFromLocalSession();
+    if (!outer) return;
+    if (!Array.isArray(courses) || !courses.length) {
+      lead.textContent = 'Khám phá danh mục hoặc khóa nổi bật phía dưới để bắt đầu ghi danh.';
+      outer.hidden = true;
+      return;
+    }
+    const st = pickContinueState(courses);
+    if (!st) {
+      lead.textContent = 'Xem lớp học bên dưới khi bài học đã sẵn sàng.';
+      outer.hidden = true;
+      return;
+    }
+    const c = st.course;
+    const les = st.nextLesson;
+    lead.textContent = st.allComplete
+      ? 'Bạn đã xong tất cả bài — có thể ôn lại hoặc thử thêm thử thách quiz.'
+      : 'Đây là bài nên mở tiếp theo theo thứ tự lộ trình.';
+    outer.hidden = false;
+    setContinueRing(st.percent);
+    const tEl = document.getElementById('landingContinueCourseTitle');
+    if (tEl) tEl.textContent = c.courseTitle || 'Khóa học';
+    const meta = document.getElementById('landingContinueCourseMeta');
+    if (meta) {
+      const m = [c.category, c.level].filter(Boolean).join(' · ');
+      meta.textContent = m || '';
+    }
+    const lessonTitle = document.getElementById('landingContinueLessonTitle');
+    if (lessonTitle) lessonTitle.textContent = (les && les.title) || 'Bài học';
+    const lessonMeta = document.getElementById('landingContinueLessonMeta');
+    if (lessonMeta) lessonMeta.textContent = les ? lessonUpNextMeta(les) : '';
+    const cta = document.getElementById('landingContinueCta');
+    if (cta) {
+      cta.textContent = st.allComplete ? 'Xem lại bài' : 'Học tiếp';
+      const courseId = c.courseId != null ? String(c.courseId) : '';
+      const lessonId = les && les.lessonId != null ? String(les.lessonId) : '';
+      cta.href =
+        'student/learn.html?courseId=' + encodeURIComponent(courseId) + '&lessonId=' + encodeURIComponent(lessonId);
+    }
+  }
+
   function typeLabelFromLevel(level) {
     const l = String(level || '').toLowerCase();
     if (/beginner|nhập môn|cơ bản|begin/.test(l)) return 'Chứng chỉ · Cơ bản';
@@ -89,28 +198,56 @@
     return 'Khóa học';
   }
 
-  function pseudoRating(id) {
-    return (4.2 + (Number(id) % 8) / 10).toFixed(1);
+  function courseTierPill(c) {
+    const plus = String(c.accessTier || 'FREE').toUpperCase() === 'PLUS';
+    const cls = plus ? 'course-tier-pill course-tier-pill--plus' : 'course-tier-pill course-tier-pill--free';
+    const label = plus ? 'Plus' : 'Free';
+    const title = plus ? 'Cần gói StudyHub Plus' : 'Miễn phí';
+    return `<span class="landing-fcard-tier ${cls}" title="${escapeAttr(title)}">${escapeHtml(label)}</span>`;
+  }
+
+  function providerLine(c) {
+    const cat = c.category && String(c.category).trim();
+    const name = cat || 'StudyHub';
+    const initial = cat && cat.length ? String(cat).charAt(0).toUpperCase() : 'S';
+    return (
+      `<div class="landing-fcard-provider">` +
+      `<span class="landing-fcard-provider-logo" aria-hidden="true">${escapeHtml(initial)}</span>` +
+      `<span>${escapeHtml(name)}</span>` +
+      `</div>`
+    );
+  }
+
+  function coursePublicHref(c) {
+    if (window.StudyApp && typeof window.StudyApp.coursePublicUrl === 'function') {
+      return window.StudyApp.coursePublicUrl(c);
+    }
+    const s = c.slug && String(c.slug).trim();
+    if (s) return 'student/course.html?slug=' + encodeURIComponent(s);
+    if (c.id != null) return 'student/course.html?id=' + encodeURIComponent(String(c.id));
+    return 'student/explore.html';
   }
 
   function landingCourseCard(c) {
     const phClass = ['a', 'b', 'c', 'd', 'e', 'f'][Number(c.id) % 6];
     const cover = c.coverImageUrl && String(c.coverImageUrl).trim();
-    const media = cover
+    const mediaInner = cover
       ? `<div class="landing-fcard-media"><img src="${escapeAttr(cover)}" alt="" loading="lazy" /></div>`
       : `<div class="landing-fcard-media landing-fcard-media--ph landing-course-thumb--${phClass}" aria-hidden="true"></div>`;
+    const media =
+      `<div class="landing-fcard-media-wrap">` + courseTierPill(c) + mediaInner + `</div>`;
     const ty = typeLabelFromLevel(c.level);
-    const stars = pseudoRating(c.id);
+    const t = escapeHtml(c.title || 'Khóa học');
+    const ar = (c.title || 'Khóa học') + ' — mô tả & ghi danh trên trang khóa học';
+    const href = coursePublicHref(c);
     return (
-      `<article class="landing-fcard">` +
+      `<a class="landing-fcard landing-fcard--link" href="${escapeAttr(href)}" aria-label="${escapeAttr(ar)}">` +
       media +
       `<div class="landing-fcard-body">` +
-      `<h3 class="landing-fcard-title">${escapeHtml(c.title || 'Khóa học')}</h3>` +
+      providerLine(c) +
+      `<h3 class="landing-fcard-title">${t}</h3>` +
       `<p class="landing-fcard-type">${escapeHtml(ty)}</p>` +
-      `<div class="landing-fcard-rating" aria-label="Đánh giá ${stars} trên 5">` +
-      `<span>${stars}</span>/5` +
-      `</div>` +
-      `</div></article>`
+      `</div></a>`
     );
   }
 
@@ -123,8 +260,9 @@
     const pct = total > 0 ? Math.min(100, Math.round((done / total) * 100)) : 0;
     const meta = [c.category, c.level].filter(Boolean).join(' · ');
     const metaHtml = meta ? `<p class="landing-fcard-type">${escapeHtml(meta)}</p>` : '';
+    const learnHref = `student/learn.html?courseId=${encodeURIComponent(String(c.courseId))}`;
     return (
-      `<a href="student/student.html" class="landing-fcard landing-mycard" data-course-id="${escapeAttr(c.courseId)}" role="listitem">` +
+      `<a href="${escapeAttr(learnHref)}" class="landing-fcard landing-mycard" data-course-id="${escapeAttr(c.courseId)}" role="listitem">` +
       media +
       `<div class="landing-fcard-body">` +
       `<h3 class="landing-fcard-title">${title}</h3>` +
@@ -137,6 +275,7 @@
 
   async function loadLandingMyCourses() {
     if (document.body.dataset.appShell !== 'study-landing') return;
+    const welcomeBlock = document.getElementById('landingWelcomeBlock');
     const guestHint = document.getElementById('landingMyLearningGuestHint');
     const loggedIn = document.getElementById('landingMyCoursesLoggedIn');
     const grid = document.getElementById('landingMyCoursesGrid');
@@ -144,10 +283,21 @@
     if (!guestHint || !loggedIn || !grid || !status) return;
 
     if (!hasValidSession()) {
+      if (welcomeBlock) welcomeBlock.hidden = true;
+      const outer = document.getElementById('landingContinueOuter');
+      if (outer) outer.hidden = true;
       guestHint.hidden = false;
       loggedIn.hidden = true;
       return;
     }
+
+    if (welcomeBlock) welcomeBlock.hidden = false;
+    const lead0 = document.getElementById('landingWelcomeLead');
+    if (lead0) lead0.textContent = 'Đang tải gợi ý học tiếp…';
+    const nameHead = document.getElementById('landingWelcomeName');
+    if (nameHead) nameHead.textContent = displayNameFromLocalSession();
+    const outer0 = document.getElementById('landingContinueOuter');
+    if (outer0) outer0.hidden = true;
 
     guestHint.hidden = true;
     loggedIn.hidden = false;
@@ -158,6 +308,7 @@
     const uid = sessionUserId();
     if (uid == null) {
       status.textContent = 'Không đọc được phiên đăng nhập.';
+      if (lead0) lead0.textContent = 'Không đọc được phiên đăng nhập.';
       return;
     }
 
@@ -169,6 +320,7 @@
       });
       if (!res.ok) throw new Error('Không tải được danh sách khóa đang học.');
       const list = await res.json();
+      fillWelcomeAndContinue(Array.isArray(list) ? list : []);
       if (!Array.isArray(list) || !list.length) {
         status.hidden = false;
         status.textContent =
@@ -177,18 +329,13 @@
       }
       status.hidden = true;
       grid.innerHTML = list.map((c) => landingMyLearningCard(c)).join('');
-      grid.querySelectorAll('a[data-course-id]').forEach((a) => {
-        a.addEventListener('click', () => {
-          try {
-            sessionStorage.setItem('studyhub_classroom_course', String(a.getAttribute('data-course-id')));
-          } catch {
-            /* ignore */
-          }
-        });
-      });
     } catch (e) {
       status.hidden = false;
       status.textContent = e.message || 'Lỗi tải dữ liệu.';
+      const lead = document.getElementById('landingWelcomeLead');
+      if (lead) lead.textContent = e.message || 'Không tải được gợi ý học tiếp.';
+      const outer = document.getElementById('landingContinueOuter');
+      if (outer) outer.hidden = true;
     }
   }
 
@@ -210,7 +357,7 @@
       mount.innerHTML = items
         .map(
           (x) =>
-            `<a href="student/student.html" class="landing-cat-pill" data-cat-id="${escapeAttr(x.id)}">${escapeHtml(x.name)}</a>`
+            `<a href="student/explore.html" class="landing-cat-pill" data-cat-id="${escapeAttr(x.id)}">${escapeHtml(x.name)}</a>`
         )
         .join('');
       mount.querySelectorAll('a[data-cat-id]').forEach((a) => {
@@ -227,7 +374,7 @@
     } catch {
       if (loading) loading.remove();
       mount.innerHTML =
-        '<a href="student/student.html" class="landing-cat-pill" data-cat-id="">Tất cả khóa học</a>';
+        '<a href="student/explore.html" class="landing-cat-pill" data-cat-id="">Tất cả khóa học</a>';
       const a = mount.querySelector('a[data-cat-id]');
       if (a) {
         a.addEventListener('click', () => {
@@ -268,7 +415,6 @@
     const primary = document.getElementById('landingCtaPrimary');
     const navLogin = document.getElementById('landingNavLogin');
     const joinBtn = document.getElementById('landingJoinBtn');
-    const hint = document.getElementById('landingSessionHint');
     const form = document.getElementById('landingSearchForm');
     const searchHint = document.getElementById('landingSearchHint');
 
@@ -288,11 +434,6 @@
         joinBtn.textContent = 'Hồ sơ & học tập';
         joinBtn.href = 'student/student.html';
       }
-      if (hint) {
-        hint.hidden = false;
-        hint.textContent =
-          'Bạn đã đăng nhập — mở menu góc phải, mục Thông tin → Hồ sơ & học tập để vào trang học tập (sidebar, dashboard như trước).';
-      }
     }
 
     if (form && searchHint) {
@@ -306,7 +447,7 @@
           } catch {
             /* ignore */
           }
-          window.location.href = 'student/student.html';
+          window.location.href = 'student/explore.html?q=' + encodeURIComponent(q);
           return;
         }
         searchHint.hidden = false;

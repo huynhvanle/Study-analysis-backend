@@ -25,11 +25,13 @@
         return;
       }
       out.innerHTML =
-        `<div class="table-wrap"><table><thead><tr><th>ID</th><th>Tên đăng nhập</th><th>Vai trò</th><th>Tên</th><th>Email</th></tr></thead><tbody>` +
+        `<div class="table-wrap"><table><thead><tr><th>ID</th><th>Tên đăng nhập</th><th>Vai trò</th><th>Gói</th><th>Tên</th><th>Email</th></tr></thead><tbody>` +
         list
           .map(
             (u) =>
-                `<tr><td>${u.id}</td><td>${escapeHtml(u.username)}</td><td>${escapeHtml(roleVi(u.role))}</td><td>${escapeHtml(u.name || '')}</td><td>${escapeHtml(u.email || '')}</td></tr>`
+                `<tr><td>${u.id}</td><td>${escapeHtml(u.username)}</td><td>${escapeHtml(roleVi(u.role))}</td><td>${escapeHtml(
+                  u.plan || 'FREE'
+                )}</td><td>${escapeHtml(u.name || '')}</td><td>${escapeHtml(u.email || '')}</td></tr>`
           )
           .join('') +
         `</tbody></table></div>`;

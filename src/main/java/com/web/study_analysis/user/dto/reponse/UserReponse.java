@@ -1,6 +1,7 @@
 package com.web.study_analysis.user.dto.reponse;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.web.study_analysis.study_business.tier.SubscriptionTier;
 import lombok.Builder;
 import lombok.Data;
 
@@ -15,5 +16,7 @@ public class UserReponse {
     private String role;
     private String name;
     private String email;
+    /** FREE / PLUS */
+    private SubscriptionTier plan;
     private LocalDateTime createdAt;
 }

@@ -12,6 +12,7 @@ import com.web.study_analysis.auth.dto.request.AuthenticationRequest;
 import com.web.study_analysis.auth.dto.request.RegisterRequest;
 import com.web.study_analysis.exception.AppException;
 import com.web.study_analysis.exception.ErrorCode;
+import com.web.study_analysis.study_business.tier.SubscriptionTier;
 import com.web.study_analysis.user.dto.request.UserCreationRequest;
 import com.web.study_analysis.user.entity.User;
 import com.web.study_analysis.user.repository.UserRepository;
@@ -92,6 +93,7 @@ public class AuthenticationService {
     }
 
     private AuthenticationReponse toAuthResponse(User user) {
+        SubscriptionTier plan = user.getPlan() != null ? user.getPlan() : SubscriptionTier.FREE;
         return AuthenticationReponse.builder()
                 .token(generateToken(user))
                 .userId(user.getId())
@@ -99,12 +101,14 @@ public class AuthenticationService {
                 .role(user.getRole())
                 .name(user.getName())
                 .email(user.getEmail())
+                .plan(plan)
                 .build();
     }
 
     String generateToken(User user) {
         JWSHeader jwsHeader = new JWSHeader(JWSAlgorithm.HS512);
 
+        SubscriptionTier plan = user.getPlan() != null ? user.getPlan() : SubscriptionTier.FREE;
         JWTClaimsSet jwtClaimsSet = new JWTClaimsSet.Builder()
                 .subject(user.getUsername())
                 .issuer("study-analysis")
@@ -112,6 +116,7 @@ public class AuthenticationService {
                 .expirationTime(Date.from(Instant.now().plus(1, ChronoUnit.HOURS)))
                 .claim("uid", user.getId())
                 .claim("role", user.getRole())
+                .claim("plan", plan.name())
                 .build();
 
         Payload payload = new Payload(jwtClaimsSet.toJSONObject());

@@ -1,5 +1,6 @@
 package com.web.study_analysis.user.dto.request;
 
+import com.web.study_analysis.study_business.tier.SubscriptionTier;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
@@ -14,4 +15,7 @@ public class UserUpdateRequest {
 
     /** Optional; set to blank to clear; validated when non-blank */
     private String email;
+
+    /** Gói học viên: FREE hoặc PLUS (quản trị). */
+    private SubscriptionTier plan;
 }

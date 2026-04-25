@@ -1,5 +1,6 @@
 package com.web.study_analysis.user.entity;
 
+import com.web.study_analysis.study_business.tier.SubscriptionTier;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -36,6 +37,12 @@ public class User {
     @Column(name = "created_at", nullable = false)
     LocalDateTime createdAt;
 
+    /** Gói đăng ký: FREE mặc định; PLUS mới học khóa gắn Plus. */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "subscription_tier", length = 20, nullable = false)
+    @Builder.Default
+    SubscriptionTier plan = SubscriptionTier.FREE;
+
     @PrePersist
     void prePersist() {
         if (createdAt == null) {
@@ -43,6 +50,9 @@ public class User {
         }
         if (role == null || role.isBlank()) {
             role = "STUDENT";
+        }
+        if (plan == null) {
+            plan = SubscriptionTier.FREE;
         }
     }
 }

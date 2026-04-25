@@ -8,6 +8,7 @@ import com.web.study_analysis.study_business.enrollment.dto.EnrollmentRequest;
 import com.web.study_analysis.study_business.enrollment.dto.EnrollmentResponse;
 import com.web.study_analysis.study_business.enrollment.entity.Enrollment;
 import com.web.study_analysis.study_business.enrollment.repository.EnrollmentRepository;
+import com.web.study_analysis.study_business.tier.SubscriptionAccess;
 import com.web.study_analysis.user.repository.UserRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +37,7 @@ public class EnrollmentService {
         if (course.getStatus() != CourseStatus.PUBLISHED) {
             throw new AppException(ErrorCode.COURSE_NOT_PUBLISHED);
         }
+        SubscriptionAccess.requireLearnAccess(user, course);
         Enrollment e = Enrollment.builder().user(user).course(course).build();
         return toResponse(enrollmentRepository.save(e));
     }

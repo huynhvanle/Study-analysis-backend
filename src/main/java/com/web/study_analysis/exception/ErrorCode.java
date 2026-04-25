@@ -14,6 +14,7 @@ public enum ErrorCode {
     QUIZ_QUESTION_NOT_FOUND(120, "Không tìm thấy câu hỏi."),
     QUIZ_OPTION_NOT_FOUND(121, "Không tìm thấy đáp án."),
     QUIZ_QUESTION_INVALID(122, "Câu hỏi không hợp lệ."),
+    QUIZ_ALREADY_SUBMITTED(123, "Bạn đã nộp bài quiz này rồi."),
     ENROLLMENT_NOT_FOUND(109, "Không tìm thấy ghi danh."),
     ALREADY_ENROLLED(110, "Bạn đã ghi danh khóa học này."),
     EXISTED_EMAIL(111, "Email đã được sử dụng."),
@@ -24,7 +25,9 @@ public enum ErrorCode {
     COURSE_SLUG_CONFLICT(116, "Đường dẫn (slug) khóa học đã được dùng."),
     CATEGORY_NOT_FOUND(117, "Không tìm thấy danh mục."),
     CATEGORY_NAME_EXISTS(118, "Tên danh mục đã tồn tại."),
-    CATEGORY_HAS_COURSES(119, "Không xoá được: vẫn còn khóa học thuộc danh mục này.")
+    CATEGORY_HAS_COURSES(119, "Không xoá được: vẫn còn khóa học thuộc danh mục này."),
+    /** Khóa StudyHub Plus — cần tài khoản gói Plus. */
+    PLUS_SUBSCRIPTION_REQUIRED(124, "Khóa học này dành cho gói StudyHub Plus. Nâng cấp tài khoản để ghi danh và học.")
     ;
 
     private int code;

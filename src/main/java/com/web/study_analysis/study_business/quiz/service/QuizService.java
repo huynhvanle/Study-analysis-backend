@@ -14,6 +14,7 @@ import com.web.study_analysis.study_business.quiz.repository.QuizOptionRepositor
 import com.web.study_analysis.study_business.quiz.repository.QuizQuestionRepository;
 import com.web.study_analysis.study_business.quiz.repository.QuizRepository;
 import com.web.study_analysis.study_business.quiz.repository.QuizResultRepository;
+import com.web.study_analysis.study_business.tier.SubscriptionAccess;
 import com.web.study_analysis.user.repository.UserRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +34,19 @@ public class QuizService {
     UserRepository userRepository;
     QuizQuestionRepository quizQuestionRepository;
     QuizOptionRepository quizOptionRepository;
+
+    @Transactional(readOnly = true)
+    public Float getLatestScore(Long userId, Long quizId) {
+        if (!userRepository.existsById(userId)) {
+            throw new AppException(ErrorCode.USER_NOTFOUND);
+        }
+        if (!quizRepository.existsById(quizId)) {
+            throw new AppException(ErrorCode.QUIZ_NOT_FOUND);
+        }
+        return quizResultRepository.findTopByUser_IdAndQuiz_IdOrderBySubmittedAtDescIdDesc(userId, quizId)
+                .map(QuizResult::getScore)
+                .orElse(null);
+    }
 
     @Transactional
     public QuizResponse create(Long lessonId, QuizRequest request) {
@@ -71,6 +85,7 @@ public class QuizService {
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOTFOUND));
         Quiz quiz = quizRepository.findById(request.getQuizId())
                 .orElseThrow(() -> new AppException(ErrorCode.QUIZ_NOT_FOUND));
+        SubscriptionAccess.requireLearnAccess(user, quiz.getLesson().getCourse());
         QuizResult result = QuizResult.builder()
                 .user(user)
                 .quiz(quiz)
@@ -85,6 +100,11 @@ public class QuizService {
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOTFOUND));
         Quiz quiz = quizRepository.findById(quizId)
                 .orElseThrow(() -> new AppException(ErrorCode.QUIZ_NOT_FOUND));
+        SubscriptionAccess.requireLearnAccess(user, quiz.getLesson().getCourse());
+
+        if (quizResultRepository.countByUser_IdAndQuiz_Id(user.getId(), quizId) > 0) {
+            throw new AppException(ErrorCode.QUIZ_ALREADY_SUBMITTED);
+        }
 
         var questions = quizQuestionRepository.findByQuiz_IdOrderByOrderIndexAscIdAsc(quizId);
         int total = questions.size();
@@ -92,7 +112,13 @@ public class QuizService {
             // still store a result (score 0)
             QuizResult result = QuizResult.builder().user(user).quiz(quiz).score(0f).build();
             quizResultRepository.save(result);
-            return QuizSubmitResponse.builder().quizId(quizId).totalQuestions(0).correctAnswers(0).score(0f).build();
+            return QuizSubmitResponse.builder()
+                    .quizId(quizId)
+                    .totalQuestions(0)
+                    .correctAnswers(0)
+                    .score(0f)
+                    .results(java.util.List.of())
+                    .build();
         }
 
         var answerMap = new java.util.HashMap<Long, Long>();
@@ -104,16 +130,24 @@ public class QuizService {
         }
 
         int correct = 0;
+        java.util.List<QuizSubmitResponse.QuestionResult> details = new java.util.ArrayList<>();
         for (var q : questions) {
             Long chosenOptionId = answerMap.get(q.getId());
-            if (chosenOptionId == null) continue;
+            Long correctOptionId = null;
             var opts = quizOptionRepository.findByQuestion_IdOrderByCodeAscIdAsc(q.getId());
             for (var o : opts) {
-                if (o.getId().equals(chosenOptionId) && Boolean.TRUE.equals(o.getCorrect())) {
-                    correct += 1;
-                    break;
+                if (Boolean.TRUE.equals(o.getCorrect())) {
+                    correctOptionId = o.getId();
                 }
             }
+            boolean isCorrect = chosenOptionId != null && correctOptionId != null && correctOptionId.equals(chosenOptionId);
+            if (isCorrect) correct += 1;
+            details.add(QuizSubmitResponse.QuestionResult.builder()
+                    .questionId(q.getId())
+                    .chosenOptionId(chosenOptionId)
+                    .correctOptionId(correctOptionId)
+                    .correct(isCorrect)
+                    .build());
         }
 
         float score = (float) (correct * 100.0 / total);
@@ -125,6 +159,7 @@ public class QuizService {
                 .totalQuestions(total)
                 .correctAnswers(correct)
                 .score(score)
+                .results(details)
                 .build();
     }
 

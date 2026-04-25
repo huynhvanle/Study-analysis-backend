@@ -8,7 +8,10 @@ import lombok.experimental.FieldDefaults;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "quiz_result")
+@Table(
+        name = "quiz_result",
+        uniqueConstraints = @UniqueConstraint(name = "uk_quiz_result_user_quiz", columnNames = {"user_id", "quiz_id"})
+)
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

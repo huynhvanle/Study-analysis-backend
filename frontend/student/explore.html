@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <base href="/study-analysis/" />
+  <meta name="api-root" content="/study-analysis" />
+  <title>StudyHub — Khám phá khóa học</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/app.css?v=45" />
+</head>
+<body class="landing-body" data-app-shell="student-explore-full">
+  <div id="alert" class="banner" role="status" hidden></div>
+  <div class="landing-page" id="landingRoot">
+    <div id="landingChrome">
+      <header class="landing-sticky">
+        <div class="landing-inner landing-nav-row">
+          <a href="student/study-landing.html" class="landing-logo">StudyHub</a>
+
+          <nav class="landing-nav-links" aria-label="Menu chính">
+            <span
+              class="landing-nav-pill landing-nav-pill--current"
+              aria-current="page"
+              title="Bạn đang ở Khám phá"
+            >Khám phá</span>
+            <a href="student/my-learning.html" class="landing-nav-pill" aria-label="Lớp của tôi">Lớp của tôi</a>
+          </nav>
+
+          <form class="landing-search" id="exploreSearchForm" role="search" aria-label="Tìm khóa học">
+            <span class="landing-search-icon" aria-hidden="true">🔍</span>
+            <input
+              type="search"
+              name="q"
+              id="exploreSearchQ"
+              class="landing-search-input"
+              placeholder="Tìm kỹ năng, chứng chỉ hoặc khóa học…"
+              autocomplete="off"
+            />
+          </form>
+
+          <div class="landing-nav-actions" id="landingNavGuest">
+            <a href="index.html?auth=1" class="landing-link-login">Đăng nhập</a>
+            <a href="index.html?auth=1&amp;tab=register" class="btn btn-outline-landing btn-sm">Tham gia miễn phí</a>
+          </div>
+
+          <div class="landing-nav-actions" id="landingNavStudent" hidden>
+            <div class="student-user-menu-wrap">
+              <button
+                type="button"
+                id="landingUserMenuBtn"
+                class="student-nav-avatar-btn"
+                aria-expanded="false"
+                aria-controls="landingUserDropdown"
+                aria-haspopup="true"
+                aria-label="Menu tài khoản"
+              >
+                <span id="landingUserAvatar" class="student-avatar-circle">?</span>
+              </button>
+              <div id="landingUserDropdown" class="student-user-dropdown hidden" role="menu" aria-labelledby="landingUserMenuBtn">
+                <div class="student-user-dropdown-profile">
+                  <span id="landingUserDisplayName" class="student-dropdown-name">—</span>
+                  <span id="landingUserDisplayId" class="student-dropdown-id">—</span>
+                  <span id="landingRoleBadge" class="role-badge student"></span>
+                </div>
+                <div class="student-dropdown-sep" role="separator"></div>
+                <p class="student-dropdown-section-label">Thông tin</p>
+                <a href="student/student.html" role="menuitem" class="student-dropdown-item">Hồ sơ &amp; học tập</a>
+                <a href="student/my-learning.html" role="menuitem" class="student-dropdown-item">Lớp của tôi</a>
+                <div class="student-dropdown-sep" role="separator"></div>
+                <button type="button" role="menuitem" class="student-dropdown-item student-dropdown-item--danger js-logout">Đăng xuất</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+    </div>
+
+    <main class="mylearning-page-main" style="min-height:auto">
+      <div class="landing-inner" style="padding:1.25rem 0 2rem; max-width:1180px">
+        <div class="card" style="margin-bottom:1rem">
+          <div>
+            <h1 style="margin:0; font-family:var(--font-display); font-size:1.35rem">Khám phá khóa học</h1>
+          </div>
+          <div id="exploreCats" class="row" style="margin-top:0.9rem; gap:0.5rem; flex-wrap:wrap"></div>
+        </div>
+
+        <div id="exploreStatus" class="muted" style="margin:0.5rem 0 0.75rem"></div>
+        <div id="exploreGrid" class="landing-featured-grid"></div>
+      </div>
+    </main>
+  </div>
+
+  <script src="js/app.js?v=46"></script>
+  <script src="js/student-explore.js?v=8"></script>
+</body>
+</html>

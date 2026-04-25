@@ -1,5 +1,6 @@
 package com.web.study_analysis.auth.dto.reponse;
 
+import com.web.study_analysis.study_business.tier.SubscriptionTier;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -15,4 +16,6 @@ public class AuthenticationReponse {
     String role;
     String name;
     String email;
+    /** FREE / PLUS */
+    SubscriptionTier plan;
 }

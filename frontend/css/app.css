@@ -746,6 +746,7 @@ body[data-app-view="student"] #app:not(.hidden) .user-chip {
 .student-user-menu-wrap {
   position: relative;
   margin-left: 0.35rem;
+  z-index: 400;
 }
 
 .student-nav-avatar-btn {
@@ -790,7 +791,8 @@ body[data-app-view="student"] #app:not(.hidden) .user-chip {
   border-radius: 12px;
   border: 1px solid #e2e8f0;
   box-shadow: 0 12px 40px rgba(15, 23, 42, 0.15);
-  z-index: 200;
+  z-index: 401;
+  pointer-events: auto;
 }
 
 .student-user-dropdown-profile {
@@ -1052,6 +1054,23 @@ a.student-dropdown-item {
   border-radius: 12px;
 }
 
+a.course-card--coursera.course-card--link {
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+a.course-card--coursera.course-card--link .course-card-type-label {
+  color: #2563eb;
+  font-weight: 600;
+  margin-top: 0.35rem;
+}
+
+.course-card-cta-chev {
+  color: #2563eb;
+  font-weight: 700;
+}
+
 .course-card--coursera .course-card-body {
   padding: 1rem 1.15rem 1.15rem;
   display: flex;
@@ -1085,6 +1104,28 @@ a.student-dropdown-item {
   color: #64748b;
   text-transform: uppercase;
   letter-spacing: 0.03em;
+}
+
+.course-tier-pill {
+  margin-left: auto;
+  font-size: 0.65rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 0.2rem 0.45rem;
+  border-radius: 6px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  color: #0f172a;
+}
+
+.course-tier-pill--plus {
+  background: linear-gradient(135deg, #1e3a5f, #2563eb);
+  border-color: rgba(37, 99, 235, 0.35);
+  color: #f8fafc;
+}
+
+.course-tier-pill--free {
+  background: linear-gradient(135deg, #f1f5f9, #ffffff);
 }
 
 .course-card--coursera .course-card-title {
@@ -1187,6 +1228,392 @@ a.student-dropdown-item {
 .landing-featured-wrap {
   padding: 0 0 2.75rem;
   background: #fff;
+}
+
+/* Coursera-style: header + row thẻ + CTA (trang landing & study-landing) */
+.landing-collections {
+  padding-top: 0.35rem;
+}
+
+.landing-collections-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.75rem 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.landing-collections-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.2rem, 2.2vw, 1.45rem);
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.25;
+}
+
+.landing-collections-kicker {
+  margin: 0.35rem 0 0;
+  font-size: 0.9rem;
+  color: #64748b;
+  line-height: 1.35;
+}
+
+.landing-collections-all {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #2563eb;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.landing-collections-all:hover {
+  text-decoration: underline;
+}
+
+.landing-collections-rail {
+  padding: 0;
+  overflow: visible;
+}
+
+.landing-collections .landing-featured-track {
+  padding: 0.2rem 0 0.85rem;
+}
+
+.landing-collections .landing-featured-track::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+}
+
+.landing-collections .landing-featured-empty,
+.landing-collections .landing-featured-loading {
+  color: #64748b;
+  text-align: center;
+  width: 100%;
+  padding: 2rem 1rem;
+}
+
+.landing-collections-foot {
+  margin: 0.15rem 0 0;
+}
+
+.landing-collections-btn-more {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 1.15rem;
+  border-radius: 999px;
+  border: 1px solid #2563eb;
+  background: #fff;
+  color: #2563eb;
+  font-size: 0.92rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.12s, color 0.12s;
+}
+
+.landing-collections-btn-more:hover {
+  background: #eff6ff;
+}
+
+.landing-fcard--link {
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+.landing-fcard--link:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+.landing-collections .landing-fcard {
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 12px rgba(15, 23, 42, 0.06);
+}
+
+.landing-collections .landing-fcard:hover {
+  box-shadow: 0 8px 28px rgba(15, 23, 42, 0.1);
+}
+
+.landing-fcard-media-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.landing-fcard-media-wrap .landing-fcard-tier {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  z-index: 2;
+  margin-left: 0;
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.18);
+}
+
+.landing-collections .landing-fcard-provider {
+  text-transform: none;
+  letter-spacing: 0.01em;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #64748b;
+}
+
+.landing-collections .landing-fcard-type {
+  margin-top: auto;
+  font-weight: 500;
+  padding-top: 0.2rem;
+}
+
+/* Khám phá: thẻ = link tới trang chi tiết, không còn nút ghi danh trên lưới */
+.course-explore-card {
+  display: flex;
+  flex-direction: column;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 12px rgba(15, 23, 42, 0.06);
+  transition: box-shadow 0.15s, transform 0.15s;
+}
+
+.course-explore-card:hover {
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.1);
+  transform: translateY(-2px);
+}
+
+.course-explore-card-hint {
+  color: #2563eb;
+  font-weight: 600;
+  margin-top: 0.45rem;
+}
+
+.landing-featured-grid .course-explore-card {
+  width: 100%;
+}
+
+/* Trang chi tiết khóa (student/course.html) */
+.course-detail-loading {
+  padding: 2rem 1rem;
+  text-align: center;
+  color: #64748b;
+}
+
+.course-detail-error {
+  padding: 1.25rem;
+  color: #b91c1c;
+  border-color: #fecaca;
+  background: #fef2f2;
+}
+
+.course-detail-breadcrumb a {
+  color: #2563eb;
+  text-decoration: none;
+}
+
+.course-detail-breadcrumb a:hover {
+  text-decoration: underline;
+}
+
+.course-detail-breadcrumb-sep {
+  margin: 0 0.3rem;
+  color: #94a3b8;
+}
+
+.course-detail-hero {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(200px, 40%);
+  grid-template-areas:
+    'text  image'
+    'cta  image';
+  gap: 0.9rem 1.5rem;
+  padding: 1.75rem 1.5rem 1.5rem;
+  border-radius: 20px;
+  background: linear-gradient(135deg, #f0f9ff 0%, #f8fafc 45%, #eef2ff 100%);
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 24px rgba(15, 23, 42, 0.06);
+  margin-bottom: 1.5rem;
+  overflow: hidden;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .course-detail-hero {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      'text'
+      'image'
+      'cta';
+  }
+}
+
+.course-detail-hero::after {
+  content: '';
+  position: absolute;
+  right: -20%;
+  top: 10%;
+  width: 55%;
+  height: 120%;
+  background: radial-gradient(ellipse, rgba(59, 130, 246, 0.08) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.course-detail-hero-text {
+  position: relative;
+  z-index: 1;
+  grid-area: text;
+  min-width: 0;
+}
+
+.course-detail-hero-cta {
+  position: relative;
+  z-index: 1;
+  grid-area: cta;
+  min-width: 0;
+}
+
+.course-detail-hero-media {
+  position: relative;
+  z-index: 1;
+  grid-area: image;
+  grid-row: 1 / span 2;
+  width: 100%;
+  min-height: 160px;
+  max-height: 280px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  background: #e2e8f0;
+  align-self: stretch;
+}
+
+@media (max-width: 900px) {
+  .course-detail-hero-media {
+    grid-row: auto;
+    max-height: 220px;
+  }
+}
+
+.course-detail-hero-img {
+  width: 100%;
+  height: 100%;
+  min-height: 120px;
+  object-fit: cover;
+  display: block;
+}
+
+.course-detail-title {
+  margin: 0.35rem 0 0.6rem;
+  font-family: var(--font-display);
+  font-size: clamp(1.45rem, 2.5vw, 1.9rem);
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+.course-detail-desc {
+  margin: 0;
+  color: #475569;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  max-width: 38rem;
+}
+
+.course-detail-provider {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.course-detail-provider-logo {
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #38bdf8, #2563eb);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.course-detail-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.5rem 1rem;
+  padding: 1rem 1.15rem;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+  margin-bottom: 1.25rem;
+}
+
+.course-detail-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.course-detail-stat-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+.course-detail-stat-value {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.course-detail-tabs-wrap {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 0.75rem 1rem 1.1rem;
+}
+
+.course-detail-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.25rem;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 0.5rem;
+}
+
+.course-detail-tab {
+  background: none;
+  border: none;
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #64748b;
+  padding: 0.2rem 0;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -0.5rem;
+  padding-bottom: 0.45rem;
+}
+
+.course-detail-tab[aria-selected='true'] {
+  color: #1d4ed8;
+  border-bottom-color: #2563eb;
+}
+
+.course-detail-prose p {
+  margin: 0.65rem 0;
+  color: #334155;
+  line-height: 1.6;
 }
 
 .landing-featured-banner {
@@ -1298,6 +1725,20 @@ a.student-dropdown-item {
 .landing-featured-track::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.35);
   border-radius: 999px;
+}
+
+/* Dùng cho trang Khám phá (student/explore.html): layout dạng lưới thay vì track cuộn ngang */
+.landing-featured-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1rem;
+  align-items: stretch;
+}
+
+.landing-featured-grid .landing-fcard {
+  width: 100%;
+  flex: initial;
+  scroll-snap-align: unset;
 }
 
 .landing-featured-loading,
@@ -1413,10 +1854,166 @@ a.student-dropdown-item {
   font-size: 0.9rem;
 }
 
-/* Landing — khóa đang học (trên Khám phá danh mục) */
+/* study-landing: chào tên + thẻ học tiếp (dưới banner Plus; thay cho block landing-quick cũ) */
+.landing-welcome-block {
+  padding: 1.35rem 0 1.1rem;
+  background: #f8fafc;
+  border-top: 1px solid #eef2f7;
+}
+
+.landing-welcome-headline {
+  margin: 0 0 0.35rem;
+  font-family: var(--font-display);
+  font-size: clamp(1.5rem, 3.5vw, 2rem);
+  font-weight: 700;
+  color: #0f172a;
+  letter-spacing: -0.02em;
+}
+
+.landing-welcome-lead {
+  margin: 0 0 1.25rem;
+  font-size: 0.98rem;
+  color: #64748b;
+  max-width: 42rem;
+  line-height: 1.45;
+}
+
+.landing-continue-outer {
+  margin-bottom: 1.25rem;
+}
+
+.landing-continue-card {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.25rem;
+  align-items: stretch;
+  border-radius: 16px;
+  padding: 1.35rem 1.5rem;
+  background:
+    linear-gradient(135deg, rgba(224, 242, 254, 0.65) 0%, rgba(255, 255, 255, 0.97) 48%, #fff 100%),
+    #fff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 10px 40px rgba(15, 23, 42, 0.06);
+}
+
+@media (min-width: 800px) {
+  .landing-continue-card {
+    grid-template-columns: 1.15fr 1fr;
+    gap: 1.5rem;
+    align-items: center;
+  }
+}
+
+.landing-continue-main {
+  display: flex;
+  gap: 1.15rem;
+  align-items: flex-start;
+  min-width: 0;
+}
+
+.landing-continue-ring-wrap {
+  position: relative;
+  width: 88px;
+  height: 88px;
+  flex-shrink: 0;
+}
+
+.landing-continue-ring {
+  --pct: 0;
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(#2563eb calc(var(--pct) * 100%), #e2e8f0 0);
+}
+
+.landing-continue-ring::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 64px;
+  height: 64px;
+  margin: -32px 0 0 -32px;
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.25);
+}
+
+.landing-continue-ring-pct {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: #0f172a;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.landing-continue-course-block {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.4rem;
+}
+
+.landing-continue-course-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 700;
+  line-height: 1.3;
+  color: #0f172a;
+}
+
+.landing-continue-course-meta {
+  margin: 0;
+  font-size: 0.88rem;
+}
+
+.landing-continue-cta {
+  margin-top: 0.35rem;
+  align-self: flex-start;
+}
+
+.landing-continue-upnext {
+  border-radius: 12px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  padding: 1rem 1.1rem;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+  min-width: 0;
+}
+
+.landing-continue-upnext-kicker {
+  margin: 0 0 0.4rem;
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #64748b;
+}
+
+.landing-continue-upnext-title {
+  margin: 0 0 0.35rem;
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.4;
+  color: #0f172a;
+}
+
+.landing-continue-upnext-meta {
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+/* Landing — khóa đang học (trên Khám phá danh mục; viền dưới chỉ ở .landing-explore-cats border-top để tránh kẻ đôi) */
 .landing-my-learning {
   padding: 2.25rem 0 1.75rem;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.35);
 }
 
 .landing-my-courses-loggedin {
@@ -2219,8 +2816,169 @@ tr:last-child td {
   color: #1e3a5f;
   padding: 0.4rem 0.65rem;
   border-radius: 8px;
+  cursor: pointer;
+  opacity: 1;
+  text-decoration: none;
+  display: inline-block;
+  box-sizing: border-box;
+}
+
+a.landing-nav-pill:hover {
+  background: rgba(0, 86, 210, 0.08);
+  color: #0056d2;
+}
+
+button.landing-nav-pill:disabled {
   cursor: not-allowed;
   opacity: 0.65;
+}
+
+/* Tab đang mở (full page) — không dùng <a> */
+.landing-nav-pill--current {
+  color: #0056d2;
+  font-weight: 700;
+  cursor: default;
+  opacity: 1;
+  background: rgba(0, 86, 210, 0.1);
+}
+
+.mylearning-page-main {
+  min-height: 50vh;
+  background: linear-gradient(180deg, #e8f0fb 0%, #f7f9fc 28%, #fff 100%);
+}
+
+.mylearning-title {
+  font-family: var(--font-display, "Outfit", system-ui, sans-serif);
+  font-size: 1.55rem;
+  font-weight: 700;
+  color: #132f4a;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.mylearning-list {
+  list-style: none;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.mylearning-card {
+  margin: 0;
+  border: 1px solid #d8e0ea;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 1px 0 rgba(15, 35, 60, 0.04);
+}
+
+.mylearning-card-link {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  gap: 0;
+  text-decoration: none;
+  color: inherit;
+  min-height: 108px;
+  transition: background 0.12s ease;
+}
+
+.mylearning-card-link:hover {
+  background: #f8fafd;
+}
+
+.mylearning-card-link:hover .mylearning-card-title {
+  color: #0056d2;
+}
+
+.mylearning-card-media {
+  width: 140px;
+  min-width: 140px;
+  min-height: 100px;
+  background: #e8eef5;
+  position: relative;
+  overflow: hidden;
+}
+
+.mylearning-card-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.mylearning-card-media--ph {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  opacity: 0.35;
+}
+
+.mylearning-card-body {
+  flex: 1;
+  min-width: 0;
+  padding: 0.9rem 1.1rem 0.85rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.35rem;
+}
+
+.mylearning-card-title {
+  font-size: 1.02rem;
+  font-weight: 600;
+  color: #0d3359;
+  margin: 0;
+  line-height: 1.3;
+}
+
+.mylearning-card-sub {
+  font-size: 0.82rem;
+  margin: 0;
+  color: #5a6a7a;
+}
+
+.mylearning-card-progress-line {
+  font-size: 0.86rem;
+  color: #3d5066;
+  margin: 0.15rem 0 0;
+}
+
+.mylearning-bar {
+  height: 6px;
+  border-radius: 999px;
+  background: #e6ecf4;
+  overflow: hidden;
+  margin: 0.2rem 0 0;
+  max-width: 280px;
+}
+
+.mylearning-bar > span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #1a6fd8, #4caf50);
+  transition: width 0.2s ease;
+}
+
+.mylearning-card-score {
+  font-size: 0.86rem;
+  color: #3d5066;
+  margin: 0.1rem 0 0;
+}
+
+@media (max-width: 600px) {
+  .mylearning-card-link {
+    flex-direction: column;
+  }
+  .mylearning-card-media {
+    width: 100%;
+    min-width: 0;
+    min-height: 120px;
+  }
 }
 
 .landing-search {
@@ -2270,6 +3028,11 @@ tr:last-child td {
   align-items: center;
   gap: 0.65rem;
   flex-shrink: 0;
+}
+
+/* [hidden] bị ghi đè bởi display:flex — cần để chỉ hiện guest HOẶC student */
+.landing-nav-actions[hidden] {
+  display: none !important;
 }
 
 .landing-link-login {
@@ -2326,6 +3089,11 @@ tr:last-child td {
     grid-template-columns: 1fr 1fr;
     gap: 1.25rem;
   }
+}
+
+/* Một banner (không còn cột đôi) — full width trên desktop */
+.landing-hero-grid:has(> :only-child) {
+  grid-template-columns: 1fr;
 }
 
 .landing-banner {
@@ -3292,4 +4060,10 @@ body[data-app-shell='admin'] {
     min-width: 120px;
     justify-content: center;
   }
+}
+
+/* Không hiển thị mã người dùng trên menu (JS cũng ẩn/hỗ trợ) */
+#userDisplayId,
+#landingUserDisplayId {
+  display: none !important;
 }

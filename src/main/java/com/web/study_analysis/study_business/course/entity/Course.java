@@ -1,6 +1,7 @@
 package com.web.study_analysis.study_business.course.entity;
 
 import com.web.study_analysis.study_business.lesson.entity.Lesson;
+import com.web.study_analysis.study_business.tier.SubscriptionTier;
 import com.web.study_analysis.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
@@ -48,6 +49,12 @@ public class Course {
     @Builder.Default
     CourseStatus status = CourseStatus.PUBLISHED;
 
+    /** FREE: mọi user; PLUS: chỉ tài khoản gói Plus. */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "access_tier", length = 20, nullable = false)
+    @Builder.Default
+    SubscriptionTier accessTier = SubscriptionTier.FREE;
+
     @Column(name = "published_at")
     LocalDateTime publishedAt;
 
@@ -74,6 +81,9 @@ public class Course {
     void prePersist() {
         if (createdAt == null) {
             createdAt = LocalDateTime.now();
+        }
+        if (accessTier == null) {
+            accessTier = SubscriptionTier.FREE;
         }
         touchPublishedAtIfNeeded();
     }

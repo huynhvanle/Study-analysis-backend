@@ -7,6 +7,7 @@ import com.web.study_analysis.study_business.progress.dto.ProgressRequest;
 import com.web.study_analysis.study_business.progress.dto.ProgressResponse;
 import com.web.study_analysis.study_business.progress.entity.Progress;
 import com.web.study_analysis.study_business.progress.repository.ProgressRepository;
+import com.web.study_analysis.study_business.tier.SubscriptionAccess;
 import com.web.study_analysis.user.repository.UserRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +31,7 @@ public class ProgressService {
         var user = userRepository.findById(request.getUserId())
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOTFOUND));
         var lesson = lessonService.getEntityById(request.getLessonId());
+        SubscriptionAccess.requireLearnAccess(user, lesson.getCourse());
         Progress p = progressRepository.findByUser_IdAndLesson_Id(request.getUserId(), request.getLessonId())
                 .orElse(Progress.builder().user(user).lesson(lesson).build());
         p.setCompleted(Boolean.TRUE.equals(request.getCompleted()));

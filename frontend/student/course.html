@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <base href="/study-analysis/" />
+  <meta name="api-root" content="/study-analysis" />
+  <title>StudyHub — Khóa học</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/app.css?v=45" />
+</head>
+<body class="landing-body" data-app-shell="student-course-detail">
+  <div id="alert" class="banner" role="status" hidden></div>
+  <div class="landing-page" id="landingRoot">
+    <div id="landingChrome">
+      <header class="landing-sticky">
+        <div class="landing-inner landing-nav-row">
+          <a href="student/study-landing.html" class="landing-logo">StudyHub</a>
+          <nav class="landing-nav-links" aria-label="Menu chính">
+            <a href="student/explore.html" class="landing-nav-pill" aria-label="Khám phá khóa học">Khám phá</a>
+            <a href="student/my-learning.html" class="landing-nav-pill" aria-label="Lớp của tôi">Lớp của tôi</a>
+          </nav>
+          <form class="landing-search" action="student/explore.html" method="get" role="search" aria-label="Tìm khóa học">
+            <span class="landing-search-icon" aria-hidden="true">🔍</span>
+            <input
+              type="search"
+              name="q"
+              id="coursePageSearchQ"
+              class="landing-search-input"
+              placeholder="Tìm khóa học…"
+              autocomplete="off"
+            />
+          </form>
+          <div class="landing-nav-actions" id="landingNavGuest">
+            <a href="index.html?auth=1" class="landing-link-login">Đăng nhập</a>
+            <a href="index.html?auth=1&amp;tab=register" class="btn btn-outline-landing btn-sm">Tham gia miễn phí</a>
+          </div>
+          <div class="landing-nav-actions" id="landingNavStudent" hidden>
+            <div class="student-user-menu-wrap">
+              <button
+                type="button"
+                id="landingUserMenuBtn"
+                class="student-nav-avatar-btn"
+                aria-expanded="false"
+                aria-controls="landingUserDropdown"
+                aria-haspopup="true"
+                aria-label="Menu tài khoản"
+              >
+                <span id="landingUserAvatar" class="student-avatar-circle">?</span>
+              </button>
+              <div id="landingUserDropdown" class="student-user-dropdown hidden" role="menu" aria-labelledby="landingUserMenuBtn">
+                <div class="student-user-dropdown-profile">
+                  <span id="landingUserDisplayName" class="student-dropdown-name">—</span>
+                  <span id="landingUserDisplayId" class="student-dropdown-id">—</span>
+                  <span id="landingRoleBadge" class="role-badge student"></span>
+                </div>
+                <div class="student-dropdown-sep" role="separator"></div>
+                <p class="student-dropdown-section-label">Thông tin</p>
+                <a href="student/student.html" role="menuitem" class="student-dropdown-item">Hồ sơ &amp; học tập</a>
+                <a href="student/my-learning.html" role="menuitem" class="student-dropdown-item">Lớp của tôi</a>
+                <div class="student-dropdown-sep" role="separator"></div>
+                <button type="button" role="menuitem" class="student-dropdown-item student-dropdown-item--danger js-logout">Đăng xuất</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+    </div>
+
+    <main class="mylearning-page-main" style="min-height:auto">
+      <div class="course-detail-container landing-inner" style="max-width: 1120px; padding: 1.25rem 0 2.5rem">
+        <p id="courseDetailBreadcrumb" class="course-detail-breadcrumb muted" style="margin: 0 0 1rem; font-size: 0.88rem" hidden>
+          <a href="student/study-landing.html">Trang học</a>
+          <span class="course-detail-breadcrumb-sep" aria-hidden="true">›</span>
+          <a href="student/explore.html" id="courseDetailBreadcrumbCatLink">Khám phá</a>
+          <span class="course-detail-breadcrumb-sep" aria-hidden="true">›</span>
+          <span id="courseDetailBreadcrumbTitle">—</span>
+        </p>
+
+        <div id="courseDetailLoading" class="course-detail-loading">Đang tải thông tin khóa…</div>
+        <div id="courseDetailError" class="course-detail-error card" style="display: none" role="alert"></div>
+
+        <article id="courseDetailArticle" class="course-detail" style="display: none" lang="vi">
+          <header class="course-detail-hero">
+            <div class="course-detail-hero-text">
+              <p class="course-detail-provider">
+                <span class="course-detail-provider-logo" aria-hidden="true">H</span>
+                <span class="course-detail-provider-name">StudyHub</span>
+              </p>
+              <h1 class="course-detail-title" id="courseDetailTitle">—</h1>
+              <p class="course-detail-desc" id="courseDetailDesc"></p>
+              <p class="course-detail-instructor-line muted" id="courseDetailTierLine" style="margin: 0.5rem 0 0; font-size: 0.9rem"></p>
+            </div>
+            <div class="course-detail-hero-media" id="courseDetailHeroMedia" aria-hidden="true"></div>
+            <div class="course-detail-hero-cta">
+              <p class="course-detail-cta-dates muted" id="courseDetailCtaSub" style="margin: 0 0 0.4rem; font-size: 0.85rem"></p>
+              <button type="button" class="btn btn-primary course-detail-enroll" id="courseDetailEnrollBtn" style="min-width: 12rem; padding: 0.7rem 1.25rem; font-size: 1.02rem">
+                Ghi danh
+              </button>
+              <p class="course-detail-cta-hint muted" id="courseDetailCtaHint" style="margin: 0.6rem 0 0; font-size: 0.82rem"></p>
+            </div>
+          </header>
+
+          <div class="course-detail-stats" id="courseDetailStats" role="group" aria-label="Thông tin tóm tắt"></div>
+
+          <div class="course-detail-tabs-wrap" id="courseDetailTabs" style="display: none">
+            <div class="course-detail-tabs" role="tablist" aria-label="Mục nội dung">
+              <button type="button" class="course-detail-tab" role="tab" aria-selected="true" data-tab="about" id="tabBtnAbout">Giới thiệu</button>
+              <button type="button" class="course-detail-tab" role="tab" aria-selected="false" data-tab="meta" id="tabBtnMeta">Thông tin thêm</button>
+            </div>
+            <div class="course-detail-panels" style="padding-top: 0.5rem">
+              <section class="course-detail-panel" role="tabpanel" id="tabPanelAbout" aria-labelledby="tabBtnAbout" style="display: block">
+                <div class="prose course-detail-prose" id="courseDetailAboutBody" style="max-width: 100%"></div>
+              </section>
+              <section class="course-detail-panel" role="tabpanel" id="tabPanelMeta" aria-labelledby="tabBtnMeta" hidden>
+                <ul class="course-detail-meta-list" id="courseDetailMetaList" style="margin: 0; padding-left: 1.2rem; color: #334155; line-height: 1.6"></ul>
+              </section>
+            </div>
+          </div>
+        </article>
+      </div>
+    </main>
+  </div>
+
+  <script src="js/app.js?v=46"></script>
+  <script src="js/student-course-detail.js?v=2"></script>
+</body>
+</html>

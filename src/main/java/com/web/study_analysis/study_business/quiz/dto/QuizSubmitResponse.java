@@ -10,5 +10,16 @@ public class QuizSubmitResponse {
     int totalQuestions;
     int correctAnswers;
     float score; // 0..100
+
+    java.util.List<QuestionResult> results;
+
+    @Data
+    @Builder
+    public static class QuestionResult {
+        Long questionId;
+        Long chosenOptionId;
+        Long correctOptionId;
+        boolean correct;
+    }
 }
 

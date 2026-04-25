@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/app.css?v=34" />
+  <link rel="stylesheet" href="css/app.css?v=37" />
 </head>
 <body data-app-shell="admin">
   <div id="app" class="app app--admin-dashboard" aria-hidden="false">
@@ -113,6 +113,12 @@
                           </select>
                         </div>
                       </div>
+                      <div class="field"><label>Gói nội dung</label>
+                        <select name="accessTier">
+                          <option value="FREE" selected>Miễn phí (mọi tài khoản)</option>
+                          <option value="PLUS">StudyHub Plus (chỉ tài khoản Plus)</option>
+                        </select>
+                      </div>
                       <input type="hidden" name="createdByUserId" id="adCreatedByUserId" value="" />
                       <div class="admin-modal-actions">
                         <button type="button" class="btn btn-ghost" id="adCourseModalCancel">Huỷ</button>
@@ -146,6 +152,12 @@
                             <option value="ARCHIVED">Đã gỡ</option>
                           </select>
                         </div>
+                      </div>
+                      <div class="field"><label>Gói nội dung</label>
+                        <select name="accessTier">
+                          <option value="FREE">Miễn phí (mọi tài khoản)</option>
+                          <option value="PLUS">StudyHub Plus (chỉ tài khoản Plus)</option>
+                        </select>
                       </div>
                       <div class="admin-modal-actions">
                         <button type="button" class="btn btn-ghost" id="adEditModalCancel">Huỷ</button>
@@ -228,6 +240,6 @@
     };
   </script>
   <script src="js/admin-common.js?v=34"></script>
-  <script src="js/admin-courses.js?v=34"></script>
+  <script src="js/admin-courses.js?v=37"></script>
 </body>
 </html>

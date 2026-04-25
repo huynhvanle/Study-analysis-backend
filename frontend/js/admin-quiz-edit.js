@@ -6,7 +6,6 @@
   const { request, showAppAlert, escapeHtml } = window.StudyAdmin;
 
   const quizTitleEl = document.getElementById('adQuizTitle');
-  const quizIdLabel = document.getElementById('adQuizIdLabel');
   const backLink = document.getElementById('adQuizBackLink');
   const form = document.getElementById('adQuestionForm');
   const listEl = document.getElementById('adQuestionsList');
@@ -33,8 +32,6 @@
     if (listEl) listEl.innerHTML = '<p class="muted">Thiếu quizId.</p>';
     return;
   }
-  if (quizIdLabel) quizIdLabel.textContent = String(quizId);
-
   async function loadQuizTitle() {
     // Không có endpoint GET /quizzes/{id}, nên lấy từ lesson quiz list bằng cách này:
     // best-effort: title sẽ được hiển thị bằng quizId nếu không lấy được.
