@@ -7,5 +7,7 @@ import java.util.List;
 
 public interface QuizQuestionRepository extends JpaRepository<QuizQuestion, Long> {
     List<QuizQuestion> findByQuiz_IdOrderByOrderIndexAscIdAsc(Long quizId);
+
+    boolean existsByQuiz_Id(Long quizId);
 }
 

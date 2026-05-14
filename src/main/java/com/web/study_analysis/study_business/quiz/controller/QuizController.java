@@ -3,17 +3,22 @@ package com.web.study_analysis.study_business.quiz.controller;
 import com.web.study_analysis.study_business.quiz.dto.QuizRequest;
 import com.web.study_analysis.study_business.quiz.dto.QuizResponse;
 import com.web.study_analysis.study_business.quiz.dto.QuizResultRequest;
+import com.web.study_analysis.study_business.quiz.dto.QuizEditStateResponse;
 import com.web.study_analysis.study_business.quiz.dto.QuizQuestionRequest;
 import com.web.study_analysis.study_business.quiz.dto.QuizQuestionResponse;
+import com.web.study_analysis.study_business.quiz.dto.QuizQuestionImportResponse;
 import com.web.study_analysis.study_business.quiz.dto.QuizSubmitRequest;
 import com.web.study_analysis.study_business.quiz.dto.QuizSubmitResponse;
 import com.web.study_analysis.study_business.quiz.dto.QuizTakeQuestionResponse;
+import com.web.study_analysis.study_business.quiz.service.QuizQuestionImportService;
 import com.web.study_analysis.study_business.quiz.service.QuizQuestionService;
 import com.web.study_analysis.study_business.quiz.service.QuizService;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.http.MediaType;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -24,6 +29,7 @@ import java.util.List;
 public class QuizController {
     QuizService quizService;
     QuizQuestionService quizQuestionService;
+    QuizQuestionImportService quizQuestionImportService;
 
     @PostMapping("/lessons/{lessonId}/quizzes")
     public QuizResponse createQuiz(@PathVariable Long lessonId, @Valid @RequestBody QuizRequest request) {
@@ -38,6 +44,11 @@ public class QuizController {
     @PutMapping("/quizzes/{quizId}")
     public QuizResponse updateQuiz(@PathVariable Long quizId, @Valid @RequestBody QuizRequest request) {
         return quizService.update(quizId, request);
+    }
+
+    @GetMapping("/quizzes/{quizId}/edit-state")
+    public QuizEditStateResponse getQuizEditState(@PathVariable Long quizId) {
+        return quizService.getEditState(quizId);
     }
 
     @DeleteMapping("/quizzes/{quizId}")
@@ -59,6 +70,11 @@ public class QuizController {
     @PostMapping("/quizzes/{quizId}/questions")
     public QuizQuestionResponse createQuestion(@PathVariable Long quizId, @Valid @RequestBody QuizQuestionRequest request) {
         return quizQuestionService.create(quizId, request);
+    }
+
+    @PostMapping(value = "/quizzes/{quizId}/questions/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public QuizQuestionImportResponse importQuestions(@PathVariable Long quizId, @RequestParam("file") MultipartFile file) {
+        return quizQuestionImportService.importQuestions(quizId, file);
     }
 
     @PutMapping("/quiz-questions/{questionId}")

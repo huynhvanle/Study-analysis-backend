@@ -15,6 +15,8 @@ public enum ErrorCode {
     QUIZ_OPTION_NOT_FOUND(121, "Không tìm thấy đáp án."),
     QUIZ_QUESTION_INVALID(122, "Câu hỏi không hợp lệ."),
     QUIZ_ALREADY_SUBMITTED(123, "Bạn đã nộp bài quiz này rồi."),
+    QUIZ_IMPORT_FILE_INVALID(124, "File import quiz không hợp lệ. Hãy dùng file .xlsx đúng mẫu."),
+    QUIZ_IMPORT_NOT_ALLOWED(125, "Không thể import vì quiz đã phát sinh kết quả làm bài."),
     ENROLLMENT_NOT_FOUND(109, "Không tìm thấy ghi danh."),
     ALREADY_ENROLLED(110, "Bạn đã ghi danh khóa học này."),
     EXISTED_EMAIL(111, "Email đã được sử dụng."),
@@ -27,7 +29,8 @@ public enum ErrorCode {
     CATEGORY_NAME_EXISTS(118, "Tên danh mục đã tồn tại."),
     CATEGORY_HAS_COURSES(119, "Không xoá được: vẫn còn khóa học thuộc danh mục này."),
     /** Khóa StudyHub Plus — cần tài khoản gói Plus. */
-    PLUS_SUBSCRIPTION_REQUIRED(124, "Khóa học này dành cho gói StudyHub Plus. Nâng cấp tài khoản để ghi danh và học.")
+    PLUS_SUBSCRIPTION_REQUIRED(126, "Khóa học này dành cho gói StudyHub Plus. Nâng cấp tài khoản để ghi danh và học."),
+    QUIZ_RESULTS_LOCKED(127, "Không thể chỉnh sửa quiz vì đã phát sinh kết quả làm bài.")
     ;
 
     private int code;

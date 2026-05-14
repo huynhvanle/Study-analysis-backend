@@ -9,6 +9,7 @@ import com.web.study_analysis.study_business.quiz.entity.QuizQuestion;
 import com.web.study_analysis.study_business.quiz.repository.QuizOptionRepository;
 import com.web.study_analysis.study_business.quiz.repository.QuizQuestionRepository;
 import com.web.study_analysis.study_business.quiz.repository.QuizRepository;
+import com.web.study_analysis.study_business.quiz.repository.QuizResultRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -24,11 +25,13 @@ public class QuizQuestionService {
     QuizRepository quizRepository;
     QuizQuestionRepository questionRepository;
     QuizOptionRepository optionRepository;
+    QuizResultRepository quizResultRepository;
 
     @Transactional
     public QuizQuestionResponse create(Long quizId, QuizQuestionRequest request) {
         Quiz quiz = quizRepository.findById(quizId)
                 .orElseThrow(() -> new AppException(ErrorCode.QUIZ_NOT_FOUND));
+        assertQuizEditable(quizId);
 
         String correct = normalizeCode(request.getCorrectCode());
         if (!Set.of("A", "B", "C", "D").contains(correct)) {
@@ -74,6 +77,7 @@ public class QuizQuestionService {
     public QuizQuestionResponse update(Long questionId, QuizQuestionRequest request) {
         QuizQuestion q = questionRepository.findById(questionId)
                 .orElseThrow(() -> new AppException(ErrorCode.QUIZ_QUESTION_NOT_FOUND));
+        assertQuizEditable(q.getQuiz().getId());
 
         String correct = normalizeCode(request.getCorrectCode());
         if (!Set.of("A", "B", "C", "D").contains(correct)) {
@@ -98,9 +102,9 @@ public class QuizQuestionService {
 
     @Transactional
     public void delete(Long questionId) {
-        if (!questionRepository.existsById(questionId)) {
-            throw new AppException(ErrorCode.QUIZ_QUESTION_NOT_FOUND);
-        }
+        QuizQuestion question = questionRepository.findById(questionId)
+                .orElseThrow(() -> new AppException(ErrorCode.QUIZ_QUESTION_NOT_FOUND));
+        assertQuizEditable(question.getQuiz().getId());
         questionRepository.deleteById(questionId);
     }
 
@@ -164,6 +168,12 @@ public class QuizQuestionService {
 
     private String normalizeCode(String s) {
         return String.valueOf(s == null ? "" : s).trim().toUpperCase(Locale.ROOT);
+    }
+
+    private void assertQuizEditable(Long quizId) {
+        if (quizResultRepository.existsByQuiz_Id(quizId)) {
+            throw new AppException(ErrorCode.QUIZ_RESULTS_LOCKED);
+        }
     }
 }
 

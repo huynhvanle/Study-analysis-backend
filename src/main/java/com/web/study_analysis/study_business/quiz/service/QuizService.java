@@ -3,6 +3,7 @@ package com.web.study_analysis.study_business.quiz.service;
 import com.web.study_analysis.exception.AppException;
 import com.web.study_analysis.exception.ErrorCode;
 import com.web.study_analysis.study_business.lesson.service.LessonService;
+import com.web.study_analysis.study_business.quiz.dto.QuizEditStateResponse;
 import com.web.study_analysis.study_business.quiz.dto.QuizRequest;
 import com.web.study_analysis.study_business.quiz.dto.QuizResponse;
 import com.web.study_analysis.study_business.quiz.dto.QuizResultRequest;
@@ -59,6 +60,7 @@ public class QuizService {
     public QuizResponse update(Long quizId, QuizRequest request) {
         Quiz quiz = quizRepository.findById(quizId)
                 .orElseThrow(() -> new AppException(ErrorCode.QUIZ_NOT_FOUND));
+        assertQuizEditable(quizId);
         if (request.getTitle() != null && !request.getTitle().isBlank()) {
             quiz.setTitle(request.getTitle());
         }
@@ -70,7 +72,21 @@ public class QuizService {
         if (!quizRepository.existsById(quizId)) {
             throw new AppException(ErrorCode.QUIZ_NOT_FOUND);
         }
+        assertQuizEditable(quizId);
         quizRepository.deleteById(quizId);
+    }
+
+    @Transactional(readOnly = true)
+    public QuizEditStateResponse getEditState(Long quizId) {
+        if (!quizRepository.existsById(quizId)) {
+            throw new AppException(ErrorCode.QUIZ_NOT_FOUND);
+        }
+        boolean hasSubmittedResults = quizResultRepository.existsByQuiz_Id(quizId);
+        return QuizEditStateResponse.builder()
+                .quizId(quizId)
+                .editable(!hasSubmittedResults)
+                .hasSubmittedResults(hasSubmittedResults)
+                .build();
     }
 
     @Transactional(readOnly = true)
@@ -169,5 +185,11 @@ public class QuizService {
                 .lessonId(q.getLesson().getId())
                 .title(q.getTitle())
                 .build();
+    }
+
+    private void assertQuizEditable(Long quizId) {
+        if (quizResultRepository.existsByQuiz_Id(quizId)) {
+            throw new AppException(ErrorCode.QUIZ_RESULTS_LOCKED);
+        }
     }
 }

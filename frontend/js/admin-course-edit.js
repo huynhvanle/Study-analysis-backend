@@ -85,6 +85,10 @@
 
   let lastLessons = [];
 
+  function getLockedQuizMessage() {
+    return 'Quiz đã có kết quả làm bài nên không thể vào soạn câu hỏi hoặc xoá nữa.';
+  }
+
   function setupCoverImagePreview(inputEl) {
     if (!inputEl) return { refresh: () => {} };
     const field = inputEl.closest('.field') || inputEl.parentElement;
@@ -224,14 +228,18 @@
           .map((l) => {
             const kind = String(l.kind || 'VIDEO').toUpperCase();
             const isQuizLesson = kind === 'QUIZ';
+            const quizLocked = isQuizLesson && !!l.hasQuizResults;
             const u = l.contentUrl ? String(l.contentUrl) : '';
             const short = u.length > 70 ? `${u.slice(0, 68)}…` : u;
             const actionCell =
               (isQuizLesson
-                ? `<button type="button" class="btn btn-sm btn-ghost" data-action="open-quiz-questions">Soạn câu hỏi</button>`
-                : '') +
-              `<button type="button" class="btn btn-sm btn-ghost" data-action="lesson-edit">Sửa</button>` +
-              `<button type="button" class="btn btn-sm btn-ghost student-dropdown-item--danger" data-action="lesson-delete" data-confirm="Bạn có chắc muốn xoá bài học #${l.id} không? Quiz/tiến độ liên quan cũng sẽ bị xoá.">Xoá</button>`;
+                ? `<button type="button" class="btn btn-sm btn-ghost" data-action="open-quiz-questions" ${
+                    quizLocked ? `disabled title="${escapeHtml(getLockedQuizMessage())}"` : ''
+                  }>${quizLocked ? 'Đã khóa' : 'Soạn câu hỏi'}</button>`
+                : `<button type="button" class="btn btn-sm btn-ghost" data-action="lesson-edit">Sửa</button>`) +
+              `<button type="button" class="btn btn-sm btn-ghost student-dropdown-item--danger" data-action="lesson-delete" ${
+                quizLocked ? `disabled title="${escapeHtml(getLockedQuizMessage())}"` : ''
+              } data-confirm="Bạn có chắc muốn xoá bài học #${l.id} không? Quiz/tiến độ liên quan cũng sẽ bị xoá.">Xoá</button>`;
             return (
               `<tr data-lesson-id="${l.id}"` +
               ` data-title="${escapeHtml(l.title || '')}"` +
@@ -239,9 +247,16 @@
               ` data-order-index="${Number(l.orderIndex) || 1}"` +
               ` data-duration="${Number(l.duration) || 15}"` +
               ` data-kind="${escapeHtml(kind)}"` +
-              ` data-quiz-id="${Number(l.quizId) || 0}">` +
+              ` data-quiz-id="${Number(l.quizId) || 0}"` +
+              ` data-quiz-locked="${quizLocked ? '1' : '0'}">` +
               `<td>${l.orderIndex}</td>` +
-              `<td>${escapeHtml(l.title)}${isQuizLesson ? `<div class="muted" style="margin-top:0.25rem;font-size:0.78rem">Bài kiểm tra</div>` : ''}</td>` +
+              `<td>${escapeHtml(l.title)}${
+                isQuizLesson
+                  ? `<div class="muted" style="margin-top:0.25rem;font-size:0.78rem">Bài kiểm tra${
+                      quizLocked ? ' • Đã có kết quả làm bài' : ''
+                    }</div>`
+                  : ''
+              }</td>` +
               `<td>${l.duration}</td>` +
               `<td>${isQuizLesson ? '<span class="muted">—</span>' : `<code style="font-size:0.75rem">${escapeHtml(short || '—')}</code>`}</td>` +
               `<td><div class="row" style="justify-content:flex-end;gap:0.4rem">${actionCell}</div></td>` +
@@ -341,6 +356,10 @@
 
       if (act === 'open-quiz-questions') {
         ev.preventDefault();
+        if (row.dataset.quizLocked === '1') {
+          showAppAlert(getLockedQuizMessage(), 'error');
+          return;
+        }
         const quizId = Number(row.dataset.quizId);
         if (!quizId) {
           showAppAlert('Bài kiểm tra này chưa có quiz.', 'error');
@@ -354,6 +373,10 @@
 
       if (act === 'lesson-delete') {
         ev.preventDefault();
+        if (row.dataset.quizLocked === '1') {
+          showAppAlert(getLockedQuizMessage(), 'error');
+          return;
+        }
         showAppAlert('');
         try {
           await request(`courses/${courseId}/lessons/${lessonId}`, { method: 'DELETE' });
@@ -444,6 +467,11 @@
           const u = new URL(window.location.href);
           const qid = Number(u.searchParams.get('quizId'));
           if (qid) {
+            const lesson = lastLessons.find((item) => Number(item?.quizId) === qid);
+            if (lesson?.hasQuizResults) {
+              showAppAlert(getLockedQuizMessage(), 'error');
+              return;
+            }
             window.location.href = `admin/quiz-edit.html?quizId=${encodeURIComponent(String(qid))}&courseId=${encodeURIComponent(
               String(courseId)
             )}`;

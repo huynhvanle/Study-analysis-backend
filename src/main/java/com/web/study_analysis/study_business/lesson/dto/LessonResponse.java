@@ -14,4 +14,5 @@ public class LessonResponse {
     private Integer duration;
     private Integer orderIndex;
     private Long quizId; // only when kind=QUIZ (1 quiz per lesson)
+    private Boolean hasQuizResults;
 }

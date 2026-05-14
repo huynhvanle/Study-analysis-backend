@@ -95,6 +95,7 @@ public class LessonService {
         LessonKind kind = l.getKind() == null ? LessonKind.VIDEO : l.getKind();
         l.setTitle(request.getTitle());
         if (kind == LessonKind.QUIZ) {
+            assertQuizLessonEditable(lessonId);
             l.setContentUrl("about:blank");
             // keep quiz title in sync
             var quizzes = quizRepository.findByLesson_Id(lessonId);
@@ -116,6 +117,7 @@ public class LessonService {
         if (!l.getCourse().getId().equals(courseId)) {
             throw new AppException(ErrorCode.LESSON_NOT_FOUND);
         }
+        assertQuizLessonEditable(lessonId);
         var quizIds = quizRepository.findByLesson_Id(lessonId).stream().map(q -> q.getId()).toList();
         if (!quizIds.isEmpty()) {
             quizResultRepository.deleteByQuiz_IdIn(quizIds);
@@ -131,10 +133,12 @@ public class LessonService {
 
     private LessonResponse toResponse(Lesson l) {
         Long quizId = null;
+        boolean hasQuizResults = false;
         if (l.getKind() == LessonKind.QUIZ) {
             var qs = quizRepository.findByLesson_Id(l.getId());
             if (!qs.isEmpty()) {
                 quizId = qs.get(0).getId();
+                hasQuizResults = quizResultRepository.existsByQuiz_Id(quizId);
             }
         }
         return LessonResponse.builder()
@@ -146,6 +150,7 @@ public class LessonService {
                 .duration(l.getDuration())
                 .orderIndex(l.getOrderIndex())
                 .quizId(quizId)
+                .hasQuizResults(hasQuizResults)
                 .build();
     }
 
@@ -155,6 +160,14 @@ public class LessonService {
             return LessonKind.valueOf(raw.trim().toUpperCase());
         } catch (Exception e) {
             return LessonKind.VIDEO;
+        }
+    }
+
+    private void assertQuizLessonEditable(Long lessonId) {
+        for (Quiz quiz : quizRepository.findByLesson_Id(lessonId)) {
+            if (quizResultRepository.existsByQuiz_Id(quiz.getId())) {
+                throw new AppException(ErrorCode.QUIZ_RESULTS_LOCKED);
+            }
         }
     }
 }

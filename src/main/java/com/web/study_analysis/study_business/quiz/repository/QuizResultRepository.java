@@ -11,6 +11,8 @@ public interface QuizResultRepository extends JpaRepository<QuizResult, Long> {
 
     boolean existsByUser_IdAndQuiz_Id(Long userId, Long quizId);
 
+    boolean existsByQuiz_Id(Long quizId);
+
     long countByUser_IdAndQuiz_Id(Long userId, Long quizId);
 
     java.util.Optional<QuizResult> findTopByUser_IdAndQuiz_IdOrderBySubmittedAtDescIdDesc(Long userId, Long quizId);

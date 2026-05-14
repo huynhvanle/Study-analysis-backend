@@ -2562,6 +2562,72 @@ body.student-app-open .landing-nav-user:not(.hidden) {
   gap: 1rem;
 }
 
+.admin-quiz-edit-tools {
+  margin-top: 1rem;
+  align-items: flex-start;
+}
+
+.admin-quiz-import-hint {
+  margin: 0 0 0.85rem;
+  line-height: 1.55;
+}
+
+.admin-quiz-import-note {
+  margin-bottom: 0.85rem;
+  padding: 0.75rem 0.85rem;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+  background: #fafcff;
+  font-size: 0.84rem;
+  line-height: 1.55;
+}
+
+.admin-quiz-import-note code {
+  font-family: var(--mono);
+}
+
+.admin-quiz-import-result {
+  margin-top: 0.95rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.admin-quiz-import-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 0.75rem;
+}
+
+.admin-quiz-import-stat {
+  padding: 0.8rem 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: #fafcff;
+}
+
+.admin-quiz-import-stat-label {
+  display: block;
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.admin-quiz-import-stat-value {
+  display: block;
+  margin-top: 0.3rem;
+  font-size: 1.25rem;
+  line-height: 1.1;
+  color: var(--text);
+}
+
+.admin-quiz-import-errors-title {
+  margin: 0 0 0.5rem;
+  font-size: 0.92rem;
+}
+
 @media (max-width: 640px) {
   .grid-2 {
     grid-template-columns: 1fr;
