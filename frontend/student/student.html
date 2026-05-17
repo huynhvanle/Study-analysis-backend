@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/app.css?v=37" />
+  <link rel="stylesheet" href="css/app.css?v=54" />
 </head>
 <body class="landing-body student-shell" data-app-shell="student">
   <div id="app" class="app app--student-landing-header" aria-hidden="false">
@@ -58,12 +58,7 @@
               </div>
               <div class="student-dropdown-sep" role="separator"></div>
               <p class="student-dropdown-section-label">Thông tin</p>
-              <button type="button" role="menuitem" class="student-dropdown-item" data-student-view="student-home">Hồ sơ &amp; học tập</button>
-              <button type="button" role="menuitem" class="student-dropdown-item" disabled title="Sắp có">Giao dịch của tôi</button>
-              <button type="button" role="menuitem" class="student-dropdown-item" disabled title="Sắp có">Cài đặt</button>
-              <button type="button" role="menuitem" class="student-dropdown-item" disabled title="Sắp có">Cập nhật</button>
-              <button type="button" role="menuitem" class="student-dropdown-item" disabled title="Sắp có">Thành tích</button>
-              <button type="button" role="menuitem" class="student-dropdown-item" disabled title="Sắp có">Trợ giúp</button>
+              <button type="button" role="menuitem" class="student-dropdown-item" data-student-view="student-history">Lịch sử học tập</button>
               <div class="student-dropdown-sep" role="separator"></div>
               <button type="button" role="menuitem" class="student-dropdown-item student-dropdown-item--danger js-logout" id="btnLogout">Đăng xuất</button>
               <div class="student-dropdown-promo">
@@ -84,7 +79,7 @@
       <main class="main">
         <div class="main-inner">
           <header class="page-header">
-            <h1 id="pageTitle">Tổng quan</h1>
+            <h1 id="pageTitle">Lịch sử học tập</h1>
             <p id="pageDesc" class="page-desc">—</p>
           </header>
           <div id="alert" class="banner" role="status" hidden></div>
@@ -94,6 +89,6 @@
     </div>
   </div>
 
-  <script src="js/app.js?v=46"></script>
+  <script src="js/app.js?v=54"></script>
 </body>
 </html>

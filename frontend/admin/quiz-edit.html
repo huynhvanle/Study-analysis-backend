@@ -80,6 +80,7 @@
                     <h3 style="margin:0 0 0.75rem;font-size:1rem">Thêm câu hỏi</h3>
                     <form id="adQuestionForm">
                       <div class="field"><label>Câu hỏi</label><textarea name="prompt" required placeholder="Nhập nội dung câu hỏi…"></textarea></div>
+                      <div class="field"><label>Giải thích chi tiết</label><textarea name="explanation" placeholder="Tùy chọn: giải thích vì sao đáp án đúng để học viên Plus xem lại sau khi làm bài…"></textarea></div>
                       <div class="grid-2">
                         <div class="field"><label>Thứ tự</label><input name="orderIndex" type="number" min="1" required value="1" /></div>
                         <div class="field"><label>Đáp án đúng</label>
@@ -123,6 +124,9 @@
                         <strong>Cột bắt buộc:</strong>
                         <code>prompt</code>, <code>optionA</code>, <code>optionB</code>, <code>optionC</code>, <code>optionD</code>, <code>correctCode</code>.
                         <br />
+                        <strong>Cột tùy chọn:</strong>
+                        <code>explanation</code> để hiển thị lời giải chi tiết cho tài khoản Plus sau khi nộp quiz.
+                        <br />
                         <strong>Thứ tự câu hỏi:</strong> hệ thống sẽ tự gán <code>orderIndex</code> = số lớn nhất hiện có của quiz + 1 theo từng dòng import.
                         <br />
                         <a href="templates/quiz-question-import-template.xlsx" download>Tải file mẫu .xlsx</a> để điền theo đúng cấu trúc trước khi import.
@@ -154,8 +158,8 @@
       desc: 'Trắc nghiệm 1 đáp án đúng (A/B/C/D).',
     };
   </script>
-  <script src="js/admin-common.js?v=52"></script>
-  <script src="js/admin-quiz-edit.js?v=56"></script>
+  <script src="js/admin-common.js?v=57"></script>
+  <script src="js/admin-quiz-edit.js?v=57"></script>
 </body>
 </html>
 

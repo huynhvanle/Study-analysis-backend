@@ -18,4 +18,5 @@ public class AuthenticationReponse {
     String email;
     /** FREE / PLUS */
     SubscriptionTier plan;
+    Boolean plusUpgradeRequested;
 }

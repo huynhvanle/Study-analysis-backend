@@ -15,13 +15,16 @@ It is the source of truth for the future `POST /quizzes/{quizId}/questions/impor
 
 - Row `1` is the header row.
 - Data starts at row `2`.
-- The preferred header contains these 6 columns in this order:
+- The preferred header can contain these columns in this order:
   1. `prompt`
-  2. `optionA`
-  3. `optionB`
-  4. `optionC`
-  5. `optionD`
-  6. `correctCode`
+  2. `explanation`
+  3. `optionA`
+  4. `optionB`
+  5. `optionC`
+  6. `optionD`
+  7. `correctCode`
+- Of those columns, `prompt`, `optionA`, `optionB`, `optionC`, `optionD`, `correctCode`
+  are required and `explanation` is optional.
 - For backward compatibility, old files that still contain an `orderIndex` column are accepted.
 - Imported rows are appended after the current last question of the quiz.
 - `orderIndex` is auto-assigned as `max(orderIndex) + 1`, then increased by `1` for each valid row in file order.
@@ -33,9 +36,9 @@ It is the source of truth for the future `POST /quizzes/{quizId}/questions/impor
 ## Example Sheet
 
 ```text
-prompt                    | optionA                | optionB           | optionC        | optionD        | correctCode
-Java la gi?               | Ngon ngu lap trinh     | He dieu hanh      | Trinh duyet    | Co so du lieu  | A
-JVM viet tat cua cum nao? | Java Virtual Machine   | Java Vendor Mode  | Joint VM       | JSON View Map  | A
+prompt                    | explanation                                 | optionA                | optionB           | optionC        | optionD        | correctCode
+Java la gi?               | Java la ngon ngu lap trinh huong doi tuong. | Ngon ngu lap trinh     | He dieu hanh      | Trinh duyet    | Co so du lieu  | A
+JVM viet tat cua cum nao? | JVM la may ao dung de chay bytecode Java.   | Java Virtual Machine   | Java Vendor Mode  | Joint VM       | JSON View Map  | A
 ```
 
 ## Column Rules
@@ -52,6 +55,14 @@ JVM viet tat cua cum nao? | Java Virtual Machine   | Java Vendor Mode  | Joint V
 - Required text.
 - Trim leading and trailing whitespace before validation.
 - Must not be blank after trimming.
+- Stored value uses the trimmed content.
+
+### `explanation`
+
+- Optional text.
+- Trim leading and trailing whitespace before validation.
+- Empty cells are accepted.
+- If provided, must not exceed `2000` characters.
 - Stored value uses the trimmed content.
 
 ### `optionA`
@@ -125,5 +136,6 @@ to an existing quiz before any learner submission happens.
 - Each data row maps 1:1 to `QuizQuestionRequest`.
 - `orderIndex` is generated automatically from the current quiz state.
 - `prompt` maps to `prompt`.
+- `explanation` maps to the optional explanation shown in Plus review mode.
 - `optionA` .. `optionD` map to the four fixed answer choices already used by the quiz flow.
 - `correctCode` maps to the existing `A/B/C/D` answer key model.

@@ -39,7 +39,10 @@ public class GlobalExceptionHandler {
         ApiReponse<Void> apiReponse = new ApiReponse<>();
         apiReponse.setCode(errorCode.getCode());
         apiReponse.setMessgase(errorCode.getMessgage());
-        HttpStatus status = errorCode == ErrorCode.UNAUTHENTICATED ? HttpStatus.UNAUTHORIZED : HttpStatus.BAD_REQUEST;
+        HttpStatus status =
+                (errorCode == ErrorCode.UNAUTHENTICATED || errorCode == ErrorCode.USER_INACTIVE)
+                        ? HttpStatus.UNAUTHORIZED
+                        : HttpStatus.BAD_REQUEST;
         return ResponseEntity.status(status).body(apiReponse);
     }
 

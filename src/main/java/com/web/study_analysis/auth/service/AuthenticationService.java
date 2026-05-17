@@ -15,6 +15,7 @@ import com.web.study_analysis.exception.ErrorCode;
 import com.web.study_analysis.study_business.tier.SubscriptionTier;
 import com.web.study_analysis.user.dto.request.UserCreationRequest;
 import com.web.study_analysis.user.entity.User;
+import com.web.study_analysis.user.entity.UserStatus;
 import com.web.study_analysis.user.repository.UserRepository;
 import com.web.study_analysis.user.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -89,6 +90,9 @@ public class AuthenticationService {
         if (user == null || !passwordEncoder.matches(authenticationRequest.getPassword(), user.getPassword())) {
             throw new AppException(ErrorCode.UNAUTHENTICATED);
         }
+        if (user.getStatus() == UserStatus.INACTIVE) {
+            throw new AppException(ErrorCode.USER_INACTIVE);
+        }
         return toAuthResponse(user);
     }
 
@@ -102,6 +106,7 @@ public class AuthenticationService {
                 .name(user.getName())
                 .email(user.getEmail())
                 .plan(plan)
+                .plusUpgradeRequested(Boolean.TRUE.equals(user.getPlusUpgradeRequested()))
                 .build();
     }
 

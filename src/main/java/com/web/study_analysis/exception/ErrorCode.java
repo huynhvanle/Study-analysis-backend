@@ -7,6 +7,7 @@ public enum ErrorCode {
     INVALID_PASSWORD(103, "Mật khẩu cần từ 8 đến 16 ký tự."),
     INVALID_ENUMKEY(1000, "Dữ liệu gửi lên không hợp lệ."),
     USER_NOTFOUND(104, "Không tìm thấy người dùng."),
+    USER_INACTIVE(129, "Tài khoản đã bị dừng hoạt động."),
     UNAUTHENTICATED(105, "Sai tên đăng nhập hoặc mật khẩu."),
     COURSE_NOT_FOUND(106, "Không tìm thấy khóa học."),
     LESSON_NOT_FOUND(107, "Không tìm thấy bài học."),
@@ -20,6 +21,7 @@ public enum ErrorCode {
     ENROLLMENT_NOT_FOUND(109, "Không tìm thấy ghi danh."),
     ALREADY_ENROLLED(110, "Bạn đã ghi danh khóa học này."),
     EXISTED_EMAIL(111, "Email đã được sử dụng."),
+    EMAIL_REQUIRED(128, "Email là bắt buộc."),
     INVALID_EMAIL(112, "Email không đúng định dạng."),
     JWT_SIGNING_FAILED(113, "Không tạo được token đăng nhập. Kiểm tra cấu hình JWT trên server."),
     DUPLICATE_DATA(114, "Tên đăng nhập hoặc email đã tồn tại."),
@@ -30,7 +32,8 @@ public enum ErrorCode {
     CATEGORY_HAS_COURSES(119, "Không xoá được: vẫn còn khóa học thuộc danh mục này."),
     /** Khóa StudyHub Plus — cần tài khoản gói Plus. */
     PLUS_SUBSCRIPTION_REQUIRED(126, "Khóa học này dành cho gói StudyHub Plus. Nâng cấp tài khoản để ghi danh và học."),
-    QUIZ_RESULTS_LOCKED(127, "Không thể chỉnh sửa quiz vì đã phát sinh kết quả làm bài.")
+    QUIZ_RESULTS_LOCKED(127, "Không thể chỉnh sửa quiz vì đã phát sinh kết quả làm bài."),
+    PLUS_QUIZ_REVIEW_REQUIRED(130, "Chức năng xem đáp án quiz chi tiết chỉ dành cho tài khoản StudyHub Plus.")
     ;
 
     private int code;

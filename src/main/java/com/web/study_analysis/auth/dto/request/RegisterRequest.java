@@ -31,7 +31,8 @@ public class RegisterRequest {
     @Size(max = 255)
     String name;
 
-    /** Tuỳ chọn; chuẩn hoá trong service */
+    /** Bắt buộc; chuẩn hoá trong service */
+    @NotBlank(message = "EMAIL_REQUIRED")
     @Size(max = 255)
     String email;
 }

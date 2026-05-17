@@ -11,6 +11,7 @@ import com.web.study_analysis.study_business.lesson.repository.LessonRepository;
 import com.web.study_analysis.study_business.progress.repository.ProgressRepository;
 import com.web.study_analysis.study_business.quiz.entity.Quiz;
 import com.web.study_analysis.study_business.quiz.repository.QuizRepository;
+import com.web.study_analysis.study_business.quiz.repository.QuizResultAnswerRepository;
 import com.web.study_analysis.study_business.quiz.repository.QuizResultRepository;
 import com.web.study_analysis.study_business.studylog.repository.StudyLogRepository;
 import lombok.AccessLevel;
@@ -30,6 +31,7 @@ public class LessonService {
     ProgressRepository progressRepository;
     StudyLogRepository studyLogRepository;
     QuizRepository quizRepository;
+    QuizResultAnswerRepository quizResultAnswerRepository;
     QuizResultRepository quizResultRepository;
 
     @Transactional
@@ -120,6 +122,7 @@ public class LessonService {
         assertQuizLessonEditable(lessonId);
         var quizIds = quizRepository.findByLesson_Id(lessonId).stream().map(q -> q.getId()).toList();
         if (!quizIds.isEmpty()) {
+            quizResultAnswerRepository.deleteByQuizResult_Quiz_IdIn(quizIds);
             quizResultRepository.deleteByQuiz_IdIn(quizIds);
         }
         progressRepository.deleteByLesson_IdIn(List.of(lessonId));

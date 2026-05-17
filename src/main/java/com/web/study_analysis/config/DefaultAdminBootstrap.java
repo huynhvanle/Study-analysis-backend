@@ -1,6 +1,7 @@
 package com.web.study_analysis.config;
 
 import com.web.study_analysis.user.entity.User;
+import com.web.study_analysis.user.entity.UserStatus;
 import com.web.study_analysis.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +25,7 @@ public class DefaultAdminBootstrap implements ApplicationRunner {
     private static final String ADMIN_ROLE = "ADMIN";
     private static final String DEFAULT_USERNAME = "admin";
     private static final String DEFAULT_PASSWORD = "admin123";
+    private static final String DEFAULT_EMAIL_DOMAIN = "@studyhub.local";
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -45,7 +47,8 @@ public class DefaultAdminBootstrap implements ApplicationRunner {
                 .password(passwordEncoder.encode(DEFAULT_PASSWORD))
                 .role(ADMIN_ROLE)
                 .name("Administrator")
-                .email(null)
+                .email(nextAvailableAdminEmail())
+                .status(UserStatus.ACTIVE)
                 .build();
 
         userRepository.save(admin);
@@ -53,5 +56,16 @@ public class DefaultAdminBootstrap implements ApplicationRunner {
                 "Seeded default admin user (username={}, role={}). Change password before production.",
                 DEFAULT_USERNAME,
                 ADMIN_ROLE);
+    }
+
+    private String nextAvailableAdminEmail() {
+        String base = DEFAULT_USERNAME;
+        String candidate = base + DEFAULT_EMAIL_DOMAIN;
+        int suffix = 2;
+        while (userRepository.existsByEmail(candidate)) {
+            candidate = base + suffix + DEFAULT_EMAIL_DOMAIN;
+            suffix++;
+        }
+        return candidate;
     }
 }

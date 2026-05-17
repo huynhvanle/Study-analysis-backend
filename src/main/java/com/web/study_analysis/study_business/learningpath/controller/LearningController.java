@@ -1,6 +1,7 @@
 package com.web.study_analysis.study_business.learningpath.controller;
 
 import com.web.study_analysis.study_business.learningpath.dto.MyLearningCourseResponse;
+import com.web.study_analysis.study_business.learningpath.dto.StudyHistoryCourseResponse;
 import com.web.study_analysis.study_business.learningpath.service.LearningPathService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -28,5 +29,10 @@ public class LearningController {
     @GetMapping("/users/{userId}/my-courses")
     public List<MyLearningCourseResponse> myCourses(@PathVariable Long userId) {
         return learningPathService.getMyCourses(userId);
+    }
+
+    @GetMapping("/users/{userId}/history")
+    public List<StudyHistoryCourseResponse> history(@PathVariable Long userId) {
+        return learningPathService.getStudyHistory(userId);
     }
 }

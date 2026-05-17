@@ -421,18 +421,13 @@
     if (hasValidSession() && document.body.dataset.appShell === 'study-landing') {
       const exploreLabel = 'Xem khóa học nổi bật';
       const exploreHref = '#landing-featured-heading';
-      if (primary) {
-        primary.textContent = exploreLabel;
-        primary.setAttribute('aria-label', 'Cuộn tới phần khóa học nổi bật');
-        primary.href = exploreHref;
-      }
       if (navLogin) {
         navLogin.textContent = exploreLabel;
         navLogin.href = exploreHref;
       }
       if (joinBtn) {
-        joinBtn.textContent = 'Hồ sơ & học tập';
-        joinBtn.href = 'student/student.html';
+        joinBtn.textContent = 'Lớp của tôi';
+        joinBtn.href = 'student/my-learning.html';
       }
     }
 

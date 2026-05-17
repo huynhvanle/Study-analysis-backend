@@ -9,10 +9,64 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/app.css?v=37" />
+  <link rel="stylesheet" href="css/app.css?v=55" />
 </head>
-<body data-app-shell="student-learn">
+<body class="landing-body learn-page" data-app-shell="student-learn">
   <div id="alert" class="banner" role="status" hidden></div>
+
+  <header class="landing-sticky learn-global-nav" aria-label="Điều hướng StudyHub">
+    <div class="landing-inner landing-nav-row">
+      <a href="student/study-landing.html" class="landing-logo">StudyHub</a>
+
+      <nav class="landing-nav-links" aria-label="Menu chính">
+        <a href="student/explore.html" class="landing-nav-pill" aria-label="Khám phá khóa học">Khám phá</a>
+        <a href="student/my-learning.html" class="landing-nav-pill" aria-label="Lớp của tôi">Lớp của tôi</a>
+      </nav>
+
+      <form class="landing-search" id="learnNavSearchForm" role="search" aria-label="Tìm khóa học">
+        <span class="landing-search-icon" aria-hidden="true">🔍</span>
+        <input
+          type="search"
+          name="q"
+          class="landing-search-input"
+          placeholder="Tìm kỹ năng, chứng chỉ hoặc khóa học…"
+          autocomplete="off"
+        />
+      </form>
+
+      <div class="landing-nav-actions" id="landingNavGuest" hidden>
+        <a href="index.html?auth=1" class="landing-link-login">Đăng nhập</a>
+      </div>
+
+      <div class="landing-nav-actions" id="landingNavStudent" hidden>
+        <div class="student-user-menu-wrap">
+          <button
+            type="button"
+            id="landingUserMenuBtn"
+            class="student-nav-avatar-btn"
+            aria-expanded="false"
+            aria-controls="landingUserDropdown"
+            aria-haspopup="true"
+            aria-label="Menu tài khoản"
+          >
+            <span id="landingUserAvatar" class="student-avatar-circle">?</span>
+          </button>
+          <div id="landingUserDropdown" class="student-user-dropdown hidden" role="menu" aria-labelledby="landingUserMenuBtn">
+            <div class="student-user-dropdown-profile">
+              <span id="landingUserDisplayName" class="student-dropdown-name">—</span>
+              <span id="landingUserDisplayId" class="student-dropdown-id">—</span>
+              <span id="landingRoleBadge" class="role-badge student"></span>
+            </div>
+            <div class="student-dropdown-sep" role="separator"></div>
+            <p class="student-dropdown-section-label">Thông tin</p>
+            <a href="student/student.html?view=student-history" role="menuitem" class="student-dropdown-item">Lịch sử học tập</a>
+            <div class="student-dropdown-sep" role="separator"></div>
+            <button type="button" role="menuitem" class="student-dropdown-item student-dropdown-item--danger js-logout">Đăng xuất</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
 
   <div class="learn-layout">
     <aside class="learn-sidebar" aria-label="Danh sách bài học">
@@ -46,17 +100,23 @@
   </div>
 
   <style>
-    body[data-app-shell="student-learn"] {
+    body.learn-page[data-app-shell="student-learn"] {
       margin: 0;
       min-height: 100vh;
+      display: flex;
+      flex-direction: column;
       background: #f7fbff;
       color: var(--text);
       font-family: var(--font);
     }
+    body.learn-page .learn-global-nav {
+      flex-shrink: 0;
+    }
     .learn-layout {
       display: grid;
       grid-template-columns: 360px 1fr;
-      min-height: 100vh;
+      flex: 1;
+      min-height: 0;
     }
     .learn-sidebar {
       border-right: 1px solid var(--border);
@@ -157,8 +217,7 @@
     }
   </style>
 
-  <script src="js/app.js?v=46"></script>
-  <script src="js/student-learn.js?v=9"></script>
+  <script src="js/app.js?v=53"></script>
+  <script src="js/student-learn.js?v=12"></script>
 </body>
 </html>
-

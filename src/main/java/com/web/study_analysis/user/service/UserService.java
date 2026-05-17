@@ -2,11 +2,11 @@ package com.web.study_analysis.user.service;
 
 import com.web.study_analysis.exception.AppException;
 import com.web.study_analysis.exception.ErrorCode;
+import com.web.study_analysis.study_business.tier.SubscriptionTier;
 import com.web.study_analysis.user.dto.reponse.UserReponse;
 import com.web.study_analysis.user.dto.request.UserCreationRequest;
 import com.web.study_analysis.user.dto.request.UserUpdateRequest;
 import com.web.study_analysis.user.entity.User;
-import com.web.study_analysis.user.mapper.UserMapper;
 import com.web.study_analysis.user.repository.UserRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +25,6 @@ public class UserService {
             Pattern.compile("^[\\w+.-]+@[\\w.-]+\\.[a-zA-Z]{2,}$");
 
     UserRepository userRepository;
-    UserMapper userMapper;
     PasswordEncoder passwordEncoder;
 
     public UserReponse createUser(UserCreationRequest userCreationRequest) {
@@ -33,8 +32,9 @@ public class UserService {
             throw new AppException(ErrorCode.EXISTED_USER);
         }
         String email = normalizeEmail(userCreationRequest.getEmail());
+        assertEmailPresent(email);
         assertEmailValid(email);
-        if (email != null && userRepository.existsByEmail(email)) {
+        if (userRepository.existsByEmail(email)) {
             throw new AppException(ErrorCode.EXISTED_EMAIL);
         }
         User user = User.builder()
@@ -47,15 +47,15 @@ public class UserService {
                 .email(email)
                 .build();
 
-        return userMapper.toUserReponse(userRepository.save(user));
+        return toUserReponse(userRepository.save(user));
     }
 
     public List<UserReponse> getAllUsers() {
-        return userRepository.findAll().stream().map(userMapper::toUserReponse).toList();
+        return userRepository.findAll().stream().map(this::toUserReponse).toList();
     }
 
     public UserReponse getUserById(Long userId) {
-        return userMapper.toUserReponse(userRepository.findById(userId)
+        return toUserReponse(userRepository.findById(userId)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOTFOUND)));
     }
 
@@ -74,20 +74,42 @@ public class UserService {
         }
         if (uRequest.getEmail() != null) {
             String email = normalizeEmail(uRequest.getEmail());
+            assertEmailPresent(email);
             assertEmailValid(email);
-            if (email != null) {
-                userRepository.findByEmail(email)
-                        .filter(other -> !other.getId().equals(user.getId()))
-                        .ifPresent(u -> {
-                            throw new AppException(ErrorCode.EXISTED_EMAIL);
-                        });
-            }
+            userRepository.findByEmail(email)
+                    .filter(other -> !other.getId().equals(user.getId()))
+                    .ifPresent(u -> {
+                        throw new AppException(ErrorCode.EXISTED_EMAIL);
+                    });
             user.setEmail(email);
         }
         if (uRequest.getPlan() != null) {
             user.setPlan(uRequest.getPlan());
+            if (uRequest.getPlan() == SubscriptionTier.PLUS) {
+                user.setPlusUpgradeRequested(false);
+            }
         }
-        return userMapper.toUserReponse(userRepository.save(user));
+        if (uRequest.getStatus() != null) {
+            user.setStatus(uRequest.getStatus());
+        }
+        if (uRequest.getPlusUpgradeRequested() != null) {
+            user.setPlusUpgradeRequested(uRequest.getPlusUpgradeRequested());
+        }
+        return toUserReponse(userRepository.save(user));
+    }
+
+    public UserReponse requestPlusUpgrade(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOTFOUND));
+        if (user.getPlan() == SubscriptionTier.PLUS) {
+            user.setPlusUpgradeRequested(false);
+            return toUserReponse(userRepository.save(user));
+        }
+        if (!Boolean.TRUE.equals(user.getPlusUpgradeRequested())) {
+            user.setPlusUpgradeRequested(true);
+            user = userRepository.save(user);
+        }
+        return toUserReponse(user);
     }
 
     public void deleteUser(Long userId) {
@@ -102,11 +124,31 @@ public class UserService {
     }
 
     private static void assertEmailValid(String email) {
-        if (email == null) {
-            return;
-        }
         if (!EMAIL_PATTERN.matcher(email).matches()) {
             throw new AppException(ErrorCode.INVALID_EMAIL);
         }
+    }
+
+    private static void assertEmailPresent(String email) {
+        if (email == null) {
+            throw new AppException(ErrorCode.EMAIL_REQUIRED);
+        }
+    }
+
+    private UserReponse toUserReponse(User user) {
+        if (user == null) {
+            return null;
+        }
+        return UserReponse.builder()
+                .id(user.getId())
+                .username(user.getUsername())
+                .role(user.getRole())
+                .name(user.getName())
+                .email(user.getEmail())
+                .plan(user.getPlan())
+                .status(user.getStatus())
+                .plusUpgradeRequested(Boolean.TRUE.equals(user.getPlusUpgradeRequested()))
+                .createdAt(user.getCreatedAt())
+                .build();
     }
 }

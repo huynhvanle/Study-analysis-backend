@@ -28,6 +28,129 @@
 
   let activeCourse = null;
   let activeLesson = null;
+  let studySession = null;
+
+  const STUDY_LOG_MIN_MS = 15000;
+
+  function getApiRoot() {
+    const meta = document.querySelector('meta[name="api-root"]');
+    const raw = meta?.getAttribute('content')?.trim() ?? '';
+    return raw.replace(/\/$/, '');
+  }
+
+  function buildApiUrl(path) {
+    const cleanPath = String(path || '').replace(/^\/+/, '');
+    const root = getApiRoot();
+    if (!root) return cleanPath;
+    if (/^https?:\/\//i.test(root)) return `${root}/${cleanPath}`;
+    const prefix = root.startsWith('/') ? root : `/${root}`;
+    return `${prefix}/${cleanPath}`;
+  }
+
+  function beginStudySession(lesson, mode, extra) {
+    if (!lesson || !lesson.lessonId || !state.userId) {
+      studySession = null;
+      return;
+    }
+    const now = Date.now();
+    studySession = {
+      mode: mode || 'lesson',
+      lessonId: Number(lesson.lessonId),
+      quizId: extra?.quizId != null ? Number(extra.quizId) : null,
+      activeMs: 0,
+      lastVisibleAt: document.visibilityState === 'hidden' ? null : now,
+    };
+  }
+
+  function snapshotStudySessionMs(session) {
+    if (!session) return 0;
+    let activeMs = Number(session.activeMs) || 0;
+    if (session.lastVisibleAt != null) {
+      activeMs += Math.max(0, Date.now() - session.lastVisibleAt);
+    }
+    return activeMs;
+  }
+
+  function pauseStudySession() {
+    if (!studySession || studySession.lastVisibleAt == null) return;
+    studySession.activeMs = snapshotStudySessionMs(studySession);
+    studySession.lastVisibleAt = null;
+  }
+
+  function resumeStudySession() {
+    if (!studySession || studySession.lastVisibleAt != null) return;
+    studySession.lastVisibleAt = Date.now();
+  }
+
+  function buildStudyLogBody(session, options) {
+    if (!session || !state.userId || !session.lessonId) return null;
+    const opts = options || {};
+    if (session.mode === 'quiz' && opts.score == null) return null;
+
+    const elapsedMs = snapshotStudySessionMs(session);
+    if (elapsedMs < STUDY_LOG_MIN_MS && !opts.forceMinimumMinute) {
+      return null;
+    }
+
+    const body = {
+      userId: Number(state.userId),
+      lessonId: Number(session.lessonId),
+      timeSpent: Math.max(1, Math.round(elapsedMs / 60000)),
+    };
+    if (opts.score != null && Number.isFinite(Number(opts.score))) {
+      body.score = Number(opts.score);
+    }
+    return body;
+  }
+
+  function sendStudyLogKeepalive(body) {
+    try {
+      const headers = { 'Content-Type': 'application/json' };
+      if (state.token) {
+        headers.Authorization = `Bearer ${state.token}`;
+      }
+      fetch(buildApiUrl('study-logs'), {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(body),
+        keepalive: true,
+      }).catch(() => {});
+    } catch {
+      /* ignore */
+    }
+  }
+
+  async function flushStudySession(options) {
+    if (!studySession) return;
+    const currentSession = studySession;
+    studySession = null;
+    const body = buildStudyLogBody(currentSession, options);
+    if (!body) return;
+
+    if (options?.keepalive) {
+      sendStudyLogKeepalive(body);
+      return;
+    }
+
+    try {
+      await request('study-logs', { method: 'POST', body });
+    } catch {
+      /* keep study log failure silent for learning flow */
+    }
+  }
+
+  async function switchToLesson(lesson, options) {
+    const opts = options || {};
+    const currentLessonId = Number(activeLesson?.lessonId || 0);
+    const nextLessonId = Number(lesson?.lessonId || 0);
+    if (!opts.force && currentLessonId && nextLessonId && currentLessonId === nextLessonId) {
+      return;
+    }
+    if (!opts.skipFlush) {
+      await flushStudySession();
+    }
+    renderLesson(lesson);
+  }
 
   function updateDoneButton(lesson) {
     if (!btnDone) return;
@@ -98,6 +221,7 @@
     }
 
     playerEl.innerHTML = lessonPlayerHtml(lesson.contentUrl || '') || '<p class="muted" style="margin:0">Chưa có URL nội dung.</p>';
+    beginStudySession(lesson, 'lesson');
   }
 
   async function renderQuizLesson(lesson) {
@@ -113,6 +237,91 @@
       const quizId = Number(quiz.id);
       if (!quizId) throw new Error('QuizId không hợp lệ.');
 
+      function reviewDetailsHtml(results) {
+        if (!Array.isArray(results) || !results.length) return '';
+        return (
+          `<div style="display:grid; gap:0.85rem; margin-top:0.9rem">` +
+          results
+            .map((item, idx) => {
+              const chosen = item?.chosenOptionCode
+                ? `<strong>${escapeHtml(item.chosenOptionCode)}</strong>: ${escapeHtml(item.chosenOptionContent || '')}`
+                : '<span class="muted">Bạn chưa chọn đáp án cho câu này.</span>';
+              const correct = item?.correctOptionCode
+                ? `<strong>${escapeHtml(item.correctOptionCode)}</strong>: ${escapeHtml(item.correctOptionContent || '')}`
+                : '<span class="muted">Chưa có đáp án đúng được cấu hình.</span>';
+              const explanation = item?.explanation
+                ? `<div style="margin-top:0.55rem; padding:0.65rem 0.75rem; border-radius:12px; background:#f8fafc; border:1px solid var(--border)"><div class="muted" style="font-size:0.78rem; margin-bottom:0.2rem">Giải thích</div>${escapeHtml(item.explanation)}</div>`
+                : '';
+              return `
+                <div class="card" style="margin:0">
+                  <div class="row" style="justify-content:space-between; align-items:flex-start; gap:0.75rem; flex-wrap:wrap">
+                    <div>
+                      <div class="muted" style="font-size:0.8rem; margin-bottom:0.2rem">Câu ${idx + 1}</div>
+                      <div style="font-weight:650">${escapeHtml(item?.prompt || '')}</div>
+                    </div>
+                    <span class="learn-pill ${item?.correct ? 'done' : 'locked'}">${item?.correct ? 'Đúng' : 'Sai'}</span>
+                  </div>
+                  <div style="margin-top:0.7rem; display:grid; gap:0.45rem">
+                    <div><span class="muted">Bạn chọn:</span> ${chosen}</div>
+                    <div><span class="muted">Đáp án đúng:</span> ${correct}</div>
+                  </div>
+                  ${explanation}
+                </div>
+              `;
+            })
+            .join('') +
+          `</div>`
+        );
+      }
+
+      function scoreOnlyHtml(score, noteHtml) {
+        return `
+          <div class="card">
+            <div class="muted" style="font-size:0.82rem">Quiz</div>
+            <div style="font-family:var(--font-display); font-weight:800; font-size:1.05rem">${escapeHtml(quiz.title || `#${quizId}`)}</div>
+            <p class="muted" style="margin:0.65rem 0 0">Bạn đã nộp quiz này rồi (chỉ được làm 1 lần).</p>
+            <div style="margin-top:0.9rem; display:flex; align-items:baseline; justify-content:space-between; gap:1rem; flex-wrap:wrap">
+              <div>
+                <div class="muted" style="font-size:0.82rem">Điểm gần nhất</div>
+                <div style="font-family:var(--font-display); font-weight:850; font-size:1.15rem">${
+                  Number.isFinite(score) ? score.toFixed(1) : '—'
+                } / 100</div>
+              </div>
+            </div>
+            ${noteHtml || ''}
+          </div>
+        `;
+      }
+
+      function reviewHtml(review, fallbackScore) {
+        const score = review?.score != null ? Number(review.score) : fallbackScore;
+        const counts =
+          review?.detailsAvailable && review?.correctAnswers != null && review?.totalQuestions != null
+            ? `<div class="muted" style="font-size:0.9rem">Đúng: <strong>${review.correctAnswers}</strong> / ${review.totalQuestions}</div>`
+            : '';
+        const note = review?.detailsAvailable
+          ? ''
+          : `<p class="muted" style="margin:0.75rem 0 0">Bài làm này chưa có dữ liệu đáp án chi tiết để xem lại.</p>`;
+        return `
+          <div class="card">
+            <div class="muted" style="font-size:0.82rem">Quiz</div>
+            <div style="font-family:var(--font-display); font-weight:800; font-size:1.05rem">${escapeHtml(quiz.title || `#${quizId}`)}</div>
+            <p class="muted" style="margin:0.65rem 0 0">Bạn đã nộp quiz này rồi (chỉ được làm 1 lần).</p>
+            <div style="margin-top:0.9rem; display:flex; align-items:baseline; justify-content:space-between; gap:1rem; flex-wrap:wrap">
+              <div>
+                <div class="muted" style="font-size:0.82rem">Điểm gần nhất</div>
+                <div style="font-family:var(--font-display); font-weight:850; font-size:1.15rem">${
+                  Number.isFinite(score) ? score.toFixed(1) : '—'
+                } / 100</div>
+              </div>
+              ${counts}
+            </div>
+            ${note}
+          </div>
+          ${review?.detailsAvailable ? reviewDetailsHtml(review.results) : ''}
+        `;
+      }
+
       // If already submitted, show locked state + latest score.
       try {
         const latest = await request(`quizzes/${quizId}/users/${state.userId}/latest-score`, { method: 'GET' });
@@ -122,23 +331,22 @@
           lesson.completed = true;
           if (activeLesson && Number(activeLesson.lessonId) === Number(lesson.lessonId)) activeLesson.completed = true;
           updateDoneButton(lesson);
-          playerEl.innerHTML = `
-            <div class="card">
-              <div class="muted" style="font-size:0.82rem">Quiz</div>
-              <div style="font-family:var(--font-display); font-weight:800; font-size:1.05rem">${escapeHtml(
-                quiz.title || `#${quizId}`
-              )}</div>
-              <p class="muted" style="margin:0.65rem 0 0">Bạn đã nộp quiz này rồi (chỉ được làm 1 lần).</p>
-              <div style="margin-top:0.9rem; display:flex; align-items:baseline; justify-content:space-between; gap:1rem; flex-wrap:wrap">
-                <div>
-                  <div class="muted" style="font-size:0.82rem">Điểm gần nhất</div>
-                  <div style="font-family:var(--font-display); font-weight:850; font-size:1.15rem">${
-                    Number.isFinite(score) ? score.toFixed(1) : '—'
-                  } / 100</div>
-                </div>
-              </div>
-            </div>
-          `;
+          try {
+            const review = await request(`quizzes/${quizId}/users/${state.userId}/review`, { method: 'GET' });
+            if (review?.reviewAllowed) {
+              playerEl.innerHTML = reviewHtml(review, score);
+            } else {
+              playerEl.innerHTML = scoreOnlyHtml(
+                score,
+                '<p class="muted" style="margin:0.75rem 0 0">Nâng cấp lên <strong>StudyHub Plus</strong> để xem đáp án đúng, đáp án bạn đã chọn và giải thích chi tiết sau khi làm quiz.</p>'
+              );
+            }
+          } catch {
+            playerEl.innerHTML = scoreOnlyHtml(
+              score,
+              '<p class="muted" style="margin:0.75rem 0 0">Nâng cấp lên <strong>StudyHub Plus</strong> để xem đáp án đúng, đáp án bạn đã chọn và giải thích chi tiết sau khi làm quiz.</p>'
+            );
+          }
           return;
         }
       } catch {
@@ -198,6 +406,7 @@
         </form>
         <div id="stuQuizResult" class="card hidden" style="margin-top:0.9rem"></div>
       `;
+      beginStudySession(lesson, 'quiz', { quizId });
 
       const form = playerEl.querySelector('#stuQuizTakeForm');
       const resultEl = playerEl.querySelector('#stuQuizResult');
@@ -256,24 +465,43 @@
             method: 'POST',
             body: { userId: state.userId, answers },
           });
+          await flushStudySession({
+            score: resp?.score,
+            forceMinimumMinute: true,
+          });
           lockQuizUi();
-          paintAnswers(resp?.results);
+          if (resp?.reviewAllowed && resp?.detailsAvailable) {
+            paintAnswers(resp?.results);
+          }
           if (resultEl) {
             resultEl.classList.remove('hidden');
             const score = resp?.score != null ? Number(resp.score) : NaN;
-            resultEl.innerHTML = `
-              <div style="display:flex; align-items:baseline; justify-content:space-between; gap:1rem; flex-wrap:wrap">
-                <div>
-                  <div class="muted" style="font-size:0.82rem">Kết quả</div>
-                  <div style="font-family:var(--font-display); font-weight:850; font-size:1.15rem">${
-                    Number.isFinite(score) ? score.toFixed(1) : '—'
-                  } / 100</div>
+            if (resp?.reviewAllowed && resp?.detailsAvailable) {
+              resultEl.innerHTML =
+                `<div style="display:flex; align-items:baseline; justify-content:space-between; gap:1rem; flex-wrap:wrap">
+                  <div>
+                    <div class="muted" style="font-size:0.82rem">Kết quả</div>
+                    <div style="font-family:var(--font-display); font-weight:850; font-size:1.15rem">${
+                      Number.isFinite(score) ? score.toFixed(1) : '—'
+                    } / 100</div>
+                  </div>
+                  <div class="muted" style="font-size:0.9rem">
+                    Đúng: <strong>${resp?.correctAnswers ?? 0}</strong> / ${resp?.totalQuestions ?? questions.length}
+                  </div>
+                </div>` + reviewDetailsHtml(resp?.results);
+            } else {
+              resultEl.innerHTML = `
+                <div style="display:flex; align-items:baseline; justify-content:space-between; gap:1rem; flex-wrap:wrap">
+                  <div>
+                    <div class="muted" style="font-size:0.82rem">Kết quả</div>
+                    <div style="font-family:var(--font-display); font-weight:850; font-size:1.15rem">${
+                      Number.isFinite(score) ? score.toFixed(1) : '—'
+                    } / 100</div>
+                  </div>
                 </div>
-                <div class="muted" style="font-size:0.9rem">
-                  Đúng: <strong>${resp?.correctAnswers ?? 0}</strong> / ${resp?.totalQuestions ?? questions.length}
-                </div>
-              </div>
-            `;
+                <p class="muted" style="margin:0.75rem 0 0">Tài khoản hiện tại chỉ xem được điểm. Nâng cấp lên <strong>StudyHub Plus</strong> để xem đáp án đúng, đáp án bạn đã chọn và giải thích chi tiết.</p>
+              `;
+            }
           }
 
           // Quiz: nộp bài xong thì tự đánh dấu hoàn thành lesson.
@@ -311,6 +539,7 @@
     if (activeLesson.completed) return;
     showAppAlert('');
     try {
+      await flushStudySession({ forceMinimumMinute: true });
       await request('progress', {
         method: 'PUT',
         body: { userId: state.userId, lessonId: Number(activeLesson.lessonId), completed: true },
@@ -356,10 +585,25 @@
 
       activeLesson = pick;
       renderLessonList(lessons);
-      renderLesson(pick);
+      await switchToLesson(pick, { skipFlush: true, force: true });
     } catch (e) {
       listEl.innerHTML = '<p class="muted" style="margin:0.75rem">' + escapeHtml(e.message) + '</p>';
     }
+  }
+
+  const learnSearchForm = document.getElementById('learnNavSearchForm');
+  if (learnSearchForm) {
+    learnSearchForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const fd = new FormData(learnSearchForm);
+      const q = String(fd.get('q') || '').trim();
+      try {
+        sessionStorage.setItem('studyhub_explore_q', q);
+      } catch {
+        /* ignore */
+      }
+      window.location.href = 'student/explore.html?q=' + encodeURIComponent(q);
+    });
   }
 
   if (!isAuthenticated()) {
@@ -372,8 +616,16 @@
 
 
   if (btnDone) btnDone.addEventListener('click', markDone);
+  if (backBtn) {
+    backBtn.addEventListener('click', async (ev) => {
+      ev.preventDefault();
+      const href = backBtn.getAttribute('href') || 'student/my-learning.html';
+      await flushStudySession();
+      window.location.href = href;
+    });
+  }
   if (listEl) {
-    listEl.addEventListener('click', (ev) => {
+    listEl.addEventListener('click', async (ev) => {
       const btn = ev.target.closest('[data-lesson-id]');
       if (!btn) return;
       const lid = Number(btn.dataset.lessonId);
@@ -381,7 +633,7 @@
       const lessons = Array.isArray(activeCourse.lessons) ? activeCourse.lessons : [];
       const lesson = lessons.find((l) => Number(l.lessonId) === lid);
       if (!lesson || !lesson.unlocked) return;
-      renderLesson(lesson);
+      await switchToLesson(lesson);
       renderLessonList(lessons);
       try {
         const u = new URL(window.location.href);
@@ -392,6 +644,20 @@
       }
     });
   }
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') {
+      pauseStudySession();
+    } else {
+      resumeStudySession();
+    }
+  });
+  window.addEventListener('pagehide', () => {
+    void flushStudySession({ keepalive: true });
+  });
+  window.addEventListener('beforeunload', () => {
+    void flushStudySession({ keepalive: true });
+  });
 
   load();
 })();

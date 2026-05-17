@@ -20,6 +20,7 @@
   const importFieldLabels = {
     orderIndex: 'Thứ tự',
     prompt: 'Câu hỏi',
+    explanation: 'Giải thích',
     optionA: 'Đáp án A',
     optionB: 'Đáp án B',
     optionC: 'Đáp án C',
@@ -202,7 +203,9 @@
           return (
             `<tr data-qid="${q.id}">` +
             `<td>${q.orderIndex ?? '—'}</td>` +
-            `<td>${escapeHtml(q.prompt || '')}</td>` +
+            `<td>${escapeHtml(q.prompt || '')}${
+              q.explanation ? `<div class="muted" style="margin-top:0.35rem;font-size:0.8rem">Giải thích: ${escapeHtml(q.explanation)}</div>` : ''
+            }</td>` +
             `<td>${optText || '—'}</td>` +
             `<td>${correct ? escapeHtml(correct.code) : '—'}</td>` +
             `<td style="white-space:nowrap">` +
@@ -278,6 +281,7 @@
       const fd = new FormData(form);
       const body = {
         prompt: fd.get('prompt'),
+        explanation: fd.get('explanation'),
         orderIndex: Number(fd.get('orderIndex') || 1),
         optionA: fd.get('optionA'),
         optionB: fd.get('optionB'),

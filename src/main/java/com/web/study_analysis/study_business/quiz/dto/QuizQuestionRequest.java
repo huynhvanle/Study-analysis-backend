@@ -11,6 +11,8 @@ public class QuizQuestionRequest {
     @NotBlank
     String prompt;
 
+    String explanation;
+
     @NotNull
     @Min(1)
     @Max(1000000)

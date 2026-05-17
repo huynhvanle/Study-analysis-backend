@@ -104,4 +104,9 @@ public class QuizController {
     public Float latestScore(@PathVariable Long quizId, @PathVariable Long userId) {
         return quizService.getLatestScore(userId, quizId);
     }
+
+    @GetMapping("/quizzes/{quizId}/users/{userId}/review")
+    public QuizSubmitResponse reviewQuiz(@PathVariable Long quizId, @PathVariable Long userId) {
+        return quizService.getReview(userId, quizId);
+    }
 }

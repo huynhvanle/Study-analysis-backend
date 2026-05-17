@@ -41,6 +41,7 @@ public class QuizQuestionService {
         QuizQuestion q = QuizQuestion.builder()
                 .quiz(quiz)
                 .prompt(request.getPrompt().trim())
+                .explanation(normalizeOptionalText(request.getExplanation()))
                 .orderIndex(request.getOrderIndex())
                 .build();
         q = questionRepository.save(q);
@@ -85,6 +86,7 @@ public class QuizQuestionService {
         }
 
         q.setPrompt(request.getPrompt().trim());
+        q.setExplanation(normalizeOptionalText(request.getExplanation()));
         q.setOrderIndex(request.getOrderIndex());
         questionRepository.save(q);
 
@@ -142,6 +144,7 @@ public class QuizQuestionService {
                 .id(q.getId())
                 .quizId(q.getQuiz().getId())
                 .prompt(q.getPrompt())
+                .explanation(q.getExplanation())
                 .orderIndex(q.getOrderIndex())
                 .options(opts)
                 .build();
@@ -168,6 +171,14 @@ public class QuizQuestionService {
 
     private String normalizeCode(String s) {
         return String.valueOf(s == null ? "" : s).trim().toUpperCase(Locale.ROOT);
+    }
+
+    private String normalizeOptionalText(String value) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 
     private void assertQuizEditable(Long quizId) {

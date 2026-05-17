@@ -6,6 +6,8 @@ import com.web.study_analysis.study_business.course.entity.Course;
 import com.web.study_analysis.study_business.enrollment.repository.EnrollmentRepository;
 import com.web.study_analysis.study_business.learningpath.dto.LessonProgressItemResponse;
 import com.web.study_analysis.study_business.learningpath.dto.MyLearningCourseResponse;
+import com.web.study_analysis.study_business.learningpath.dto.StudyHistoryCourseResponse;
+import com.web.study_analysis.study_business.learningpath.dto.StudyHistoryLessonResponse;
 import com.web.study_analysis.study_business.lesson.entity.Lesson;
 import com.web.study_analysis.study_business.lesson.repository.LessonRepository;
 import com.web.study_analysis.study_business.course.entity.CourseStatus;
@@ -13,6 +15,8 @@ import com.web.study_analysis.study_business.progress.entity.Progress;
 import com.web.study_analysis.study_business.progress.repository.ProgressRepository;
 import com.web.study_analysis.study_business.quiz.repository.QuizRepository;
 import com.web.study_analysis.study_business.quiz.repository.QuizResultRepository;
+import com.web.study_analysis.study_business.studylog.entity.StudyLog;
+import com.web.study_analysis.study_business.studylog.repository.StudyLogRepository;
 import com.web.study_analysis.study_business.tier.SubscriptionAccess;
 import com.web.study_analysis.user.entity.User;
 import com.web.study_analysis.user.repository.UserRepository;
@@ -24,12 +28,15 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.web.study_analysis.study_business.quiz.entity.QuizResult;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Aggregates enrollment, lessons, progress, and quiz counts for the learner dashboard.
@@ -58,6 +65,7 @@ public class LearningPathService {
     QuizRepository quizRepository;
     QuizResultRepository quizResultRepository;
     ProgressRepository progressRepository;
+    StudyLogRepository studyLogRepository;
 
     @Transactional(readOnly = true)
     public List<MyLearningCourseResponse> getMyCourses(Long userId) {
@@ -162,6 +170,138 @@ public class LearningPathService {
                     .build());
         }
 
+        return out;
+    }
+
+    @Transactional(readOnly = true)
+    public List<StudyHistoryCourseResponse> getStudyHistory(Long userId) {
+        if (!userRepository.existsById(userId)) {
+            throw new AppException(ErrorCode.USER_NOTFOUND);
+        }
+
+        Map<Long, Progress> progressByLessonId = progressRepository.findByUser_Id(userId).stream()
+                .collect(Collectors.toMap(p -> p.getLesson().getId(), Function.identity(), (a, b) -> a));
+        Map<Long, List<StudyLog>> logsByLessonId = studyLogRepository.findByUser_Id(userId).stream()
+                .collect(Collectors.groupingBy(log -> log.getLesson().getId()));
+        Map<Long, QuizResult> latestQuizResultByQuizId = quizResultRepository.findByUser_Id(userId).stream()
+                .collect(Collectors.toMap(
+                        r -> r.getQuiz().getId(),
+                        Function.identity(),
+                        (a, b) -> a.getSubmittedAt().isAfter(b.getSubmittedAt()) ? a : b
+                ));
+
+        List<StudyHistoryCourseResponse> out = new ArrayList<>();
+
+        for (var enrollment : enrollmentRepository.findByUser_Id(userId)) {
+            Course course = enrollment.getCourse();
+            List<Lesson> lessonsOrdered = lessonRepository.findByCourse_IdOrderByOrderIndexAsc(course.getId());
+            List<Long> lessonIds = lessonsOrdered.stream().map(Lesson::getId).toList();
+            Map<Long, List<com.web.study_analysis.study_business.quiz.entity.Quiz>> quizzesByLessonId = lessonIds.isEmpty()
+                    ? Map.of()
+                    : quizRepository.findByLesson_IdIn(lessonIds).stream()
+                    .collect(Collectors.groupingBy(q -> q.getLesson().getId()));
+
+            List<StudyHistoryLessonResponse> lessonHistory = new ArrayList<>();
+            int completedLessons = 0;
+            LocalDateTime latestCompletedAt = null;
+            LocalDateTime lastActivityAt = enrollment.getEnrolledAt();
+
+            for (Lesson lesson : lessonsOrdered) {
+                Progress progress = progressByLessonId.get(lesson.getId());
+                List<StudyLog> logs = logsByLessonId.getOrDefault(lesson.getId(), List.of());
+                List<com.web.study_analysis.study_business.quiz.entity.Quiz> quizzes = quizzesByLessonId.getOrDefault(lesson.getId(), List.of());
+
+                int totalStudyMinutes = logs.stream()
+                        .mapToInt(log -> log.getTimeSpent() == null ? 0 : log.getTimeSpent())
+                        .sum();
+                int studySessions = logs.size();
+                LocalDateTime lastStudiedAt = logs.stream()
+                        .map(StudyLog::getStudiedAt)
+                        .filter(Objects::nonNull)
+                        .max(LocalDateTime::compareTo)
+                        .orElse(null);
+
+                QuizResult latestQuizResult = quizzes.stream()
+                        .map(q -> latestQuizResultByQuizId.get(q.getId()))
+                        .filter(Objects::nonNull)
+                        .max((a, b) -> a.getSubmittedAt().compareTo(b.getSubmittedAt()))
+                        .orElse(null);
+
+                boolean completed = progress != null && progress.isCompleted();
+                if (completed) {
+                    completedLessons++;
+                    if (progress.getCompletedAt() != null &&
+                            (latestCompletedAt == null || progress.getCompletedAt().isAfter(latestCompletedAt))) {
+                        latestCompletedAt = progress.getCompletedAt();
+                    }
+                }
+
+                LocalDateTime lessonLastActivity = Stream.of(
+                                completed ? progress.getCompletedAt() : null,
+                                lastStudiedAt,
+                                latestQuizResult != null ? latestQuizResult.getSubmittedAt() : null)
+                        .filter(Objects::nonNull)
+                        .max(LocalDateTime::compareTo)
+                        .orElse(null);
+
+                boolean participated = completed || lastStudiedAt != null || latestQuizResult != null;
+                if (!participated) {
+                    continue;
+                }
+
+                if (lessonLastActivity != null && (lastActivityAt == null || lessonLastActivity.isAfter(lastActivityAt))) {
+                    lastActivityAt = lessonLastActivity;
+                }
+
+                lessonHistory.add(StudyHistoryLessonResponse.builder()
+                        .lessonId(lesson.getId())
+                        .title(lesson.getTitle())
+                        .kind(String.valueOf(lesson.getKind()))
+                        .orderIndex(lesson.getOrderIndex())
+                        .durationMinutes(lesson.getDuration())
+                        .completed(completed)
+                        .completedAt(completed ? progress.getCompletedAt() : null)
+                        .totalStudyMinutes(totalStudyMinutes)
+                        .studySessions(studySessions)
+                        .lastStudiedAt(lastStudiedAt)
+                        .latestQuizScore(latestQuizResult != null ? latestQuizResult.getScore() : null)
+                        .lastQuizSubmittedAt(latestQuizResult != null ? latestQuizResult.getSubmittedAt() : null)
+                        .lastActivityAt(lessonLastActivity)
+                        .build());
+            }
+
+            lessonHistory.sort((a, b) -> {
+                Integer ao = a.getOrderIndex() == null ? Integer.MAX_VALUE : a.getOrderIndex();
+                Integer bo = b.getOrderIndex() == null ? Integer.MAX_VALUE : b.getOrderIndex();
+                return ao.compareTo(bo);
+            });
+
+            boolean courseCompleted = !lessonsOrdered.isEmpty() && completedLessons == lessonsOrdered.size();
+            out.add(StudyHistoryCourseResponse.builder()
+                    .courseId(course.getId())
+                    .courseTitle(course.getTitle())
+                    .coverImageUrl(effectiveCoverImageUrl(course.getCoverImageUrl()))
+                    .category(course.getCategory() != null ? course.getCategory().getName() : null)
+                    .level(course.getLevel())
+                    .enrolledAt(enrollment.getEnrolledAt())
+                    .completed(courseCompleted)
+                    .completedAt(courseCompleted ? latestCompletedAt : null)
+                    .lastActivityAt(lastActivityAt)
+                    .totalLessons(lessonsOrdered.size())
+                    .completedLessons(completedLessons)
+                    .participatedLessons(lessonHistory.size())
+                    .lessons(lessonHistory)
+                    .build());
+        }
+
+        out.sort((a, b) -> {
+            LocalDateTime ad = a.getLastActivityAt() != null ? a.getLastActivityAt() : a.getEnrolledAt();
+            LocalDateTime bd = b.getLastActivityAt() != null ? b.getLastActivityAt() : b.getEnrolledAt();
+            if (ad == null && bd == null) return 0;
+            if (ad == null) return 1;
+            if (bd == null) return -1;
+            return bd.compareTo(ad);
+        });
         return out;
     }
 }

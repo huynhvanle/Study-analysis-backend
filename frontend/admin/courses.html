@@ -5,11 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <base href="/study-analysis/" />
   <meta name="api-root" content="/study-analysis" />
-  <title>StudyHub — Khóa học (Admin)</title>
+  <title>StudyHub — Quản lí nội dung học tập (Admin)</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/app.css?v=37" />
+  <link rel="stylesheet" href="css/app.css?v=39" />
 </head>
 <body data-app-shell="admin">
   <div id="app" class="app app--admin-dashboard" aria-hidden="false">
@@ -60,7 +60,7 @@
           <div class="main-inner admin-main-inner">
             <nav id="adminBreadcrumb" class="admin-breadcrumb" aria-label="Vị trí trang"></nav>
             <header class="page-header admin-page-header">
-              <h1 id="pageTitle">Khóa học</h1>
+              <h1 id="pageTitle">Quản lí nội dung học tập</h1>
             </header>
             <div id="alert" class="banner" role="status" hidden></div>
             <div id="content" class="page-content admin-page-content">
@@ -86,7 +86,7 @@
                       <button type="button" class="btn btn-ghost" id="adCatLoad">Tải lại</button>
                     </div>
                   </div>
-                  <p class="muted admin-course-hint">Chọn một dòng trong bảng để <strong>Sửa</strong> hoặc <strong>Xoá</strong>. Dùng ô tìm kiếm để lọc nhanh.</p>
+                  <p class="muted admin-course-hint">Chọn một dòng trong bảng để <strong>Quản lí bài học</strong>, <strong>Sửa</strong> hoặc <strong>Xoá</strong>. Dùng ô tìm kiếm để lọc nhanh.</p>
                   <div id="adCat"></div>
                 </div>
 
@@ -203,24 +203,41 @@
                   <div class="admin-modal-backdrop" id="adLessonsModalBackdrop" role="presentation"></div>
                   <div class="admin-modal-panel admin-modal-panel--wide">
                     <button type="button" class="admin-modal-close" id="adLessonsModalClose" aria-label="Đóng">×</button>
-                    <h2 id="adLessonsModalTitle" class="admin-modal-title">Bài học</h2>
+                    <h2 id="adLessonsModalTitle" class="admin-modal-title">Quản lí bài học</h2>
                     <p class="muted admin-course-hint" style="margin-top: -0.25rem">
-                      Mỗi bài = một video: dán link <strong>YouTube</strong>, <strong>Vimeo</strong>, hoặc URL file <strong>.mp4</strong> công khai. Học viên xem nhúng trong <strong>Lớp của tôi</strong>.
+                      Quản lí toàn bộ bài học và bài kiểm tra của khóa học tại đây. Quiz đã có kết quả làm bài sẽ bị khóa thao tác chỉnh sửa/xoá.
                     </p>
                     <div id="adLessonsList" class="ad-lessons-list-wrap"></div>
                     <form id="adLessonForm" class="card" style="margin-top: 1rem">
-                      <h3 style="margin: 0 0 0.75rem; font-size: 1rem">Thêm bài học</h3>
+                      <h3 id="adLessonFormTitle" style="margin: 0 0 0.75rem; font-size: 1rem">Thêm bài học</h3>
+                      <input type="hidden" name="lessonId" id="adLessonEditId" value="" />
                       <input type="hidden" name="courseId" id="adLessonsCourseId" value="" />
-                      <div class="field"><label>Tiêu đề</label><input name="title" required placeholder="Ví dụ: Giới thiệu Spring Boot" /></div>
                       <div class="field">
-                        <label>URL nội dung</label>
-                        <input name="contentUrl" type="url" required placeholder="https://www.youtube.com/watch?v=… hoặc link .mp4" />
+                        <label>Loại nội dung</label>
+                        <select name="kind" id="adLessonKind">
+                          <option value="lesson" selected>Bài học</option>
+                          <option value="quiz">Kiểm tra</option>
+                        </select>
+                      </div>
+                      <div id="adLessonFieldsLesson">
+                        <div class="field"><label>Tiêu đề</label><input name="title" required placeholder="Ví dụ: Giới thiệu Spring Boot" /></div>
+                        <div class="field">
+                          <label>URL nội dung</label>
+                          <input name="contentUrl" type="url" required placeholder="https://www.youtube.com/watch?v=… hoặc link .mp4" />
+                        </div>
+                      </div>
+                      <div id="adLessonFieldsQuiz" class="hidden">
+                        <div class="field"><label>Tên bài kiểm tra</label><input name="quizTitle" placeholder="VD: Kiểm tra chương 1" /></div>
+                        <p class="muted" style="margin:0.25rem 0 0">Bài kiểm tra sẽ được tạo như một bài kiểu quiz trong danh sách bài học.</p>
                       </div>
                       <div class="grid-2">
                         <div class="field"><label>Thứ tự</label><input name="orderIndex" type="number" min="1" required value="1" /></div>
                         <div class="field"><label>Thời lượng (phút)</label><input name="duration" type="number" min="1" required value="15" /></div>
                       </div>
-                      <button type="submit" class="btn btn-primary">Thêm bài</button>
+                      <div class="admin-modal-actions" style="margin-top:0.75rem">
+                        <button type="button" class="btn btn-ghost" id="adLessonCancel">Huỷ</button>
+                        <button type="submit" class="btn btn-primary" id="adLessonSubmitBtn">Lưu bài học</button>
+                      </div>
                     </form>
                   </div>
                 </div>
@@ -235,11 +252,11 @@
   <script>
     window.__ADMIN_PAGE__ = {
       active: 'courses',
-      title: 'Khóa học',
-      desc: 'Tạo, sửa, xuất bản khóa học.',
+      title: 'Quản lí nội dung học tập',
+      desc: 'Tạo, sửa, xuất bản khóa học và quản lí bài học.',
     };
   </script>
-  <script src="js/admin-common.js?v=34"></script>
-  <script src="js/admin-courses.js?v=37"></script>
+  <script src="js/admin-common.js?v=57"></script>
+  <script src="js/admin-courses.js?v=38"></script>
 </body>
 </html>

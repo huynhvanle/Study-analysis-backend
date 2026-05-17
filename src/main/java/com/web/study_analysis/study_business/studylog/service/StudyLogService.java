@@ -28,13 +28,21 @@ public class StudyLogService {
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOTFOUND));
         var lesson = lessonService.getEntityById(request.getLessonId());
         SubscriptionAccess.requireLearnAccess(user, lesson.getCourse());
+        int attempt = normalizeAttempt(request.getAttempt(), request.getUserId(), request.getLessonId());
         StudyLog entry = StudyLog.builder()
                 .user(user)
                 .lesson(lesson)
                 .timeSpent(request.getTimeSpent())
                 .score(request.getScore())
-                .attempt(request.getAttempt())
+                .attempt(attempt)
                 .build();
         studyLogRepository.save(entry);
+    }
+
+    private int normalizeAttempt(Integer requestedAttempt, Long userId, Long lessonId) {
+        if (requestedAttempt != null && requestedAttempt > 0) {
+            return requestedAttempt;
+        }
+        return (int) studyLogRepository.countByUser_IdAndLesson_Id(userId, lessonId) + 1;
     }
 }

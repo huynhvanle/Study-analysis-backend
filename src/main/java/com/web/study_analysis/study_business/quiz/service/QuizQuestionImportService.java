@@ -41,6 +41,8 @@ public class QuizQuestionImportService {
             "prompt", "optionA", "optionB", "optionC", "optionD", "correctCode"
     );
 
+    static final List<String> OPTIONAL_HEADERS = List.of("explanation");
+
     static final Set<String> ALLOWED_CORRECT_CODES = Set.of("A", "B", "C", "D");
 
     QuizRepository quizRepository;
@@ -208,6 +210,10 @@ public class QuizQuestionImportService {
             Integer cellIndex = headerIndexes.get(normalizeHeader(requiredHeader));
             values.put(requiredHeader, readCell(row, cellIndex, formatter, formulaEvaluator));
         }
+        for (String optionalHeader : OPTIONAL_HEADERS) {
+            Integer cellIndex = headerIndexes.get(normalizeHeader(optionalHeader));
+            values.put(optionalHeader, readCell(row, cellIndex, formatter, formulaEvaluator));
+        }
         return values;
     }
 
@@ -230,6 +236,7 @@ public class QuizQuestionImportService {
         validateMaxLength(values.get("optionB"), "optionB", rowNumber, 1000, errors);
         validateMaxLength(values.get("optionC"), "optionC", rowNumber, 1000, errors);
         validateMaxLength(values.get("optionD"), "optionD", rowNumber, 1000, errors);
+        validateMaxLength(values.get("explanation"), "explanation", rowNumber, 2000, errors);
 
         return errors;
     }
@@ -243,6 +250,7 @@ public class QuizQuestionImportService {
         request.setOptionC(values.get("optionC").trim());
         request.setOptionD(values.get("optionD").trim());
         request.setCorrectCode(normalizeCode(values.get("correctCode")));
+        request.setExplanation(normalizeOptionalText(values.get("explanation")));
         return request;
     }
 
@@ -275,6 +283,14 @@ public class QuizQuestionImportService {
 
     private String normalizeCode(String value) {
         return String.valueOf(value == null ? "" : value).trim().toUpperCase(Locale.ROOT);
+    }
+
+    private String normalizeOptionalText(String value) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 
     private QuizQuestionImportResponse buildResponse(Long quizId, String fileName, int totalRows, int validRows, int createdQuestions,

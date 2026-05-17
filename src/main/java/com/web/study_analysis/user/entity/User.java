@@ -31,8 +31,13 @@ public class User {
     @Column(length = 255)
     String name;
 
-    @Column(length = 255, unique = true)
+    @Column(length = 255, unique = true, nullable = false)
     String email;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "account_status", length = 20)
+    @Builder.Default
+    UserStatus status = UserStatus.ACTIVE;
 
     @Column(name = "created_at", nullable = false)
     LocalDateTime createdAt;
@@ -42,6 +47,10 @@ public class User {
     @Column(name = "subscription_tier", length = 20, nullable = false)
     @Builder.Default
     SubscriptionTier plan = SubscriptionTier.FREE;
+
+    @Column(name = "plus_upgrade_requested", nullable = false)
+    @Builder.Default
+    Boolean plusUpgradeRequested = false;
 
     @PrePersist
     void prePersist() {
@@ -53,6 +62,12 @@ public class User {
         }
         if (plan == null) {
             plan = SubscriptionTier.FREE;
+        }
+        if (status == null) {
+            status = UserStatus.ACTIVE;
+        }
+        if (plusUpgradeRequested == null) {
+            plusUpgradeRequested = false;
         }
     }
 }

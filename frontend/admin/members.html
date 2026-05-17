@@ -5,11 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <base href="/study-analysis/" />
   <meta name="api-root" content="/study-analysis" />
-  <title>StudyHub — Thành viên (Admin)</title>
+  <title>StudyHub — Quản lí người dùng (Admin)</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/app.css?v=37" />
+  <link rel="stylesheet" href="css/app.css?v=46" />
 </head>
 <body data-app-shell="admin">
   <div id="app" class="app app--admin-dashboard" aria-hidden="false">
@@ -60,27 +60,93 @@
           <div class="main-inner admin-main-inner">
             <nav id="adminBreadcrumb" class="admin-breadcrumb" aria-label="Vị trí trang"></nav>
             <header class="page-header admin-page-header">
-              <h1 id="pageTitle">Thành viên</h1>
-              <p id="pageDesc" class="page-desc">Danh sách tài khoản người dùng.</p>
+              <h1 id="pageTitle">Quản lí người dùng</h1>
+              <p id="pageDesc" class="page-desc">Tra cứu, cập nhật gói và trạng thái tài khoản người dùng.</p>
             </header>
             <div id="alert" class="banner" role="status" hidden></div>
             <div id="content" class="page-content admin-page-content">
-              <div>
-                <div class="card">
-                  <h2>Tất cả thành viên</h2>
-                  <button type="button" class="btn btn-primary" id="memLoad">Tải lại danh sách</button>
-                  <div id="memTable" style="margin-top:1rem"></div>
+              <div class="card admin-course-page">
+                <div class="admin-course-toolbar">
+                  <h2>Danh sách người dùng</h2>
+                  <div class="admin-course-toolbar-actions">
+                    <button type="button" class="btn btn-primary" id="memOpenPlusApproval">Phê duyệt tài khoản Plus</button>
+                  </div>
                 </div>
-                <div class="card">
-                  <h2>Chi tiết thành viên</h2>
-                  <form id="memOne" class="row">
-                    <div class="field" style="width:140px;margin-bottom:0">
-                      <label>Mã người dùng</label>
-                      <input name="userId" type="number" min="1" required />
+                <div class="admin-user-filters">
+                  <div class="admin-user-filter admin-user-filter--wide">
+                    <label for="memSearch" class="visually-hidden">Tìm người dùng</label>
+                    <input
+                      type="search"
+                      id="memSearch"
+                      class="admin-course-search-input"
+                      placeholder="Tìm theo tên đăng nhập hoặc tên hiển thị…"
+                      autocomplete="off"
+                    />
+                  </div>
+                  <div class="admin-user-filter admin-user-filter--wide">
+                    <label for="memEmailSearch" class="visually-hidden">Tìm theo email</label>
+                    <input
+                      type="search"
+                      id="memEmailSearch"
+                      class="admin-course-search-input"
+                      placeholder="Lọc theo email…"
+                      autocomplete="off"
+                    />
+                  </div>
+                  <div class="field admin-user-filter">
+                    <label for="memPlanFilter">Loại tài khoản</label>
+                    <select id="memPlanFilter">
+                      <option value="">Tất cả</option>
+                      <option value="FREE">Free</option>
+                      <option value="PLUS">Plus</option>
+                    </select>
+                  </div>
+                  <div class="field admin-user-filter">
+                    <label for="memStatusFilter">Trạng thái tài khoản</label>
+                    <select id="memStatusFilter">
+                      <option value="">Tất cả</option>
+                      <option value="ACTIVE">Hoạt động</option>
+                      <option value="INACTIVE">Dừng hoạt động</option>
+                    </select>
+                  </div>
+                  <div class="admin-user-filter admin-user-filter--actions">
+                    <button type="button" class="btn btn-ghost" id="memClearFilters">Xóa lọc</button>
+                    <button type="button" class="btn btn-ghost" id="memReload">Tải lại</button>
+                  </div>
+                </div>
+                <p class="muted admin-course-hint">
+                  Có thể tìm theo <strong>tên</strong>, lọc riêng theo <strong>email</strong>, và lọc tiếp theo <strong>loại tài khoản</strong> hoặc <strong>trạng thái</strong>.
+                  Dùng nút <strong>Phê duyệt tài khoản Plus</strong> để cấp Plus, và dùng nút <strong>Hoạt động / Ngừng hoạt động</strong> để đổi trạng thái tài khoản.
+                </p>
+                <div id="memSummary" class="muted" style="margin:0 0 0.85rem"></div>
+                <div id="memTable"></div>
+              </div>
+
+              <div id="memPlusModal" class="admin-modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="memPlusModalTitle" aria-hidden="true">
+                <div class="admin-modal-backdrop" id="memPlusModalBackdrop" role="presentation"></div>
+                <div class="admin-modal-panel admin-modal-panel--wide">
+                  <button type="button" class="admin-modal-close" id="memPlusModalClose" aria-label="Đóng">×</button>
+                  <h2 id="memPlusModalTitle" class="admin-modal-title">Phê duyệt tài khoản Plus</h2>
+                  <p class="muted admin-course-hint" style="margin-top:-0.25rem">
+                    Danh sách này chỉ hiển thị các học viên đã gửi yêu cầu nâng cấp Plus từ phía học viên.
+                  </p>
+                  <div class="admin-user-plus-toolbar">
+                    <div class="admin-user-filter admin-user-filter--wide">
+                      <label for="memPlusSearch" class="visually-hidden">Tìm học viên cấp Plus</label>
+                      <input
+                        type="search"
+                        id="memPlusSearch"
+                        class="admin-course-search-input"
+                        placeholder="Tìm theo tên, username hoặc email…"
+                        autocomplete="off"
+                      />
                     </div>
-                    <button type="submit" class="btn btn-ghost">Lấy hồ sơ</button>
-                  </form>
-                  <pre class="pre" id="memPre" hidden style="margin-top:1rem"></pre>
+                  </div>
+                  <div id="memPlusSummary" class="muted" style="margin:0 0 0.85rem"></div>
+                  <div id="memPlusTable"></div>
+                  <div class="admin-modal-actions">
+                    <button type="button" class="btn btn-ghost" id="memPlusCancel">Đóng</button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -93,11 +159,11 @@
   <script>
     window.__ADMIN_PAGE__ = {
       active: 'members',
-      title: 'Thành viên',
-      desc: 'Danh sách tài khoản người dùng.',
+      title: 'Quản lí người dùng',
+      desc: 'Tra cứu, cập nhật gói và trạng thái tài khoản người dùng.',
     };
   </script>
-  <script src="js/admin-common.js?v=34"></script>
-  <script src="js/admin-members.js?v=35"></script>
+  <script src="js/admin-common.js?v=57"></script>
+  <script src="js/admin-members.js?v=41"></script>
 </body>
 </html>

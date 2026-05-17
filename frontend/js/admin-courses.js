@@ -113,8 +113,16 @@
   const catTitleEl = root.querySelector('#catModalTitle');
   const catEditId = root.querySelector('#catEditId');
   const adLessonsModal = root.querySelector('#adLessonsModal');
+  const adLessonsModalTitle = root.querySelector('#adLessonsModalTitle');
   const adLessonsList = root.querySelector('#adLessonsList');
   const adLessonForm = root.querySelector('#adLessonForm');
+  const adLessonFormTitle = root.querySelector('#adLessonFormTitle');
+  const adLessonEditId = root.querySelector('#adLessonEditId');
+  const adLessonSubmitBtn = root.querySelector('#adLessonSubmitBtn');
+  const adLessonCancelBtn = root.querySelector('#adLessonCancel');
+  const adLessonKind = root.querySelector('#adLessonKind');
+  const adLessonFieldsLesson = root.querySelector('#adLessonFieldsLesson');
+  const adLessonFieldsQuiz = root.querySelector('#adLessonFieldsQuiz');
   const hasCatUi = !!(
     catManagerModal &&
     catBtnOpenManager &&
@@ -127,6 +135,12 @@
 
   let catalogAll = [];
   let lastFiltered = [];
+  let currentLessonsCourseId = 0;
+  let lastCourseLessons = [];
+
+  function getLockedQuizMessage() {
+    return 'Quiz đã có kết quả làm bài nên không thể soạn câu hỏi hoặc xoá nữa.';
+  }
 
   /** Sắp xếp theo bảng chữ cái (tên hiển thị). */
   function sortCategoriesByName(cats) {
@@ -334,7 +348,7 @@
     function titleCell(c) {
       return (
         `<div class="ad-course-title-inner"><span class="ad-course-title-text">${escapeHtml(c.title)}</span><span class="ad-course-title-actions">` +
-        `<button type="button" class="btn btn-sm btn-ghost ad-course-row-lessons" data-course-id="${c.id}" title="Thêm / xem bài học (video)">Bài học</button>` +
+        `<button type="button" class="btn btn-sm btn-ghost ad-course-row-lessons" data-course-id="${c.id}" title="Thêm, sửa, xoá bài học">Quản lí bài học</button>` +
         `<button type="button" class="btn btn-sm btn-ghost ad-course-row-edit" data-course-id="${c.id}" aria-label="Sửa khóa học #${c.id}">Sửa</button>` +
         `<button type="button" class="btn btn-sm btn-ghost student-dropdown-item--danger ad-course-row-delete" data-course-id="${c.id}" aria-label="Xoá khóa học #${c.id}" data-confirm="Bạn có chắc muốn xoá hẳn khoá học #${c.id} không? Ghi danh, tiến độ, quiz… liên quan cũng sẽ bị xoá.">Xoá</button>` +
         `</span></div>`
@@ -383,32 +397,137 @@
     }
   }
 
+  function getCourseById(courseId) {
+    return catalogAll.find((item) => Number(item.id) === Number(courseId)) || null;
+  }
+
+  function nextLessonOrderIndexFromCache() {
+    const max = lastCourseLessons.length ? Math.max(...lastCourseLessons.map((x) => Number(x.orderIndex) || 0)) : 0;
+    return max + 1;
+  }
+
+  function setLessonKindUi(kind, isEditing) {
+    const normalizedKind = String(kind || 'lesson').trim().toLowerCase();
+    const isQuiz = normalizedKind === 'quiz';
+    const titleInput = adLessonForm?.querySelector?.('[name="title"]');
+    const contentUrlInput = adLessonForm?.querySelector?.('[name="contentUrl"]');
+    const quizTitleInput = adLessonForm?.querySelector?.('[name="quizTitle"]');
+
+    if (adLessonKind) {
+      adLessonKind.value = isQuiz ? 'quiz' : 'lesson';
+      adLessonKind.disabled = !!isEditing;
+    }
+    if (adLessonFieldsLesson) adLessonFieldsLesson.classList.toggle('hidden', isQuiz);
+    if (adLessonFieldsQuiz) adLessonFieldsQuiz.classList.toggle('hidden', !isQuiz);
+    if (titleInput) titleInput.required = !isQuiz;
+    if (contentUrlInput) contentUrlInput.required = !isQuiz;
+    if (quizTitleInput) quizTitleInput.required = isQuiz;
+
+    if (adLessonFormTitle) {
+      adLessonFormTitle.textContent = isEditing ? 'Sửa bài học' : isQuiz ? 'Thêm bài kiểm tra' : 'Thêm bài học';
+    }
+    if (adLessonSubmitBtn) {
+      adLessonSubmitBtn.textContent = isEditing ? 'Lưu thay đổi' : isQuiz ? 'Tạo bài kiểm tra' : 'Lưu bài học';
+    }
+    if (adLessonCancelBtn) {
+      adLessonCancelBtn.textContent = isEditing ? 'Huỷ chỉnh sửa' : 'Đóng';
+    }
+  }
+
+  function resetLessonForm(courseId) {
+    if (!adLessonForm) return;
+    adLessonForm.reset();
+    if (adLessonEditId) adLessonEditId.value = '';
+    const hiddenCourseId = root.querySelector('#adLessonsCourseId');
+    if (hiddenCourseId) hiddenCourseId.value = String(courseId || currentLessonsCourseId || '');
+    const orderInput = adLessonForm.querySelector('[name="orderIndex"]');
+    if (orderInput) orderInput.value = String(nextLessonOrderIndexFromCache() || 1);
+    const durationInput = adLessonForm.querySelector('[name="duration"]');
+    if (durationInput) durationInput.value = '15';
+    setLessonKindUi('lesson', false);
+  }
+
+  function fillLessonFormForEdit(row) {
+    if (!adLessonForm || !row) return;
+    const lessonId = Number(row.dataset.lessonId);
+    if (!lessonId) return;
+    adLessonForm.querySelector('[name="title"]').value = row.dataset.title || '';
+    adLessonForm.querySelector('[name="contentUrl"]').value = row.dataset.contentUrl || '';
+    adLessonForm.querySelector('[name="orderIndex"]').value = String(Number(row.dataset.orderIndex) || 1);
+    adLessonForm.querySelector('[name="duration"]').value = String(Number(row.dataset.duration) || 15);
+    if (adLessonEditId) adLessonEditId.value = String(lessonId);
+    setLessonKindUi('lesson', true);
+  }
+
   async function loadLessonsForCourse(courseId) {
     if (!adLessonsList) return;
+    currentLessonsCourseId = Number(courseId) || 0;
+    const course = getCourseById(currentLessonsCourseId);
+    if (adLessonsModalTitle) {
+      adLessonsModalTitle.textContent = course?.title
+        ? `Quản lí bài học — ${course.title}`
+        : `Quản lí bài học — khóa #${currentLessonsCourseId}`;
+    }
     adLessonsList.innerHTML = '<p class="muted">Đang tải…</p>';
     try {
-      const list = await request(`courses/${courseId}/lessons`, { method: 'GET' });
-      const oiInput = root.querySelector('#adLessonForm [name="orderIndex"]');
-      if (!Array.isArray(list) || !list.length) {
+      const list = await request(`courses/${currentLessonsCourseId}/lessons`, { method: 'GET' });
+      lastCourseLessons = Array.isArray(list) ? list : [];
+      if (!lastCourseLessons.length) {
         adLessonsList.innerHTML = '<p class="muted">Chưa có bài học.</p>';
-        if (oiInput) oiInput.value = '1';
+        if (!Number(adLessonEditId?.value || 0)) resetLessonForm(currentLessonsCourseId);
         return;
       }
-      if (oiInput) {
-        const max = Math.max(...list.map((x) => Number(x.orderIndex) || 0));
-        oiInput.value = String(max + 1);
-      }
+
       adLessonsList.innerHTML =
-        `<div class="table-wrap"><table><thead><tr><th>Thứ tự</th><th>Tiêu đề</th><th>Phút</th><th>URL</th></tr></thead><tbody>` +
-        list
-          .map((l) => {
-            const u = l.contentUrl ? String(l.contentUrl) : '';
-            const short = u.length > 52 ? `${u.slice(0, 50)}…` : u;
-            return `<tr><td>${l.orderIndex}</td><td>${escapeHtml(l.title)}</td><td>${l.duration}</td><td><code style="font-size:0.75rem">${escapeHtml(short || '—')}</code></td></tr>`;
+        `<div class="table-wrap"><table><thead><tr><th>Thứ tự</th><th>Tiêu đề</th><th>Phút</th><th>URL</th><th></th></tr></thead><tbody>` +
+        lastCourseLessons
+          .map((lesson) => {
+            const kind = String(lesson.kind || 'VIDEO').toUpperCase();
+            const isQuizLesson = kind === 'QUIZ';
+            const quizLocked = isQuizLesson && !!lesson.hasQuizResults;
+            const rawUrl = lesson.contentUrl ? String(lesson.contentUrl) : '';
+            const shortUrl = rawUrl.length > 70 ? `${rawUrl.slice(0, 68)}…` : rawUrl;
+            const actionCell =
+              (isQuizLesson
+                ? `<button type="button" class="btn btn-sm btn-ghost" data-action="open-quiz-questions" ${
+                    quizLocked ? `disabled title="${escapeHtml(getLockedQuizMessage())}"` : ''
+                  }>${quizLocked ? 'Đã khóa' : 'Soạn câu hỏi'}</button>`
+                : `<button type="button" class="btn btn-sm btn-ghost" data-action="lesson-edit">Sửa</button>`) +
+              `<button type="button" class="btn btn-sm btn-ghost student-dropdown-item--danger" data-action="lesson-delete" ${
+                quizLocked ? `disabled title="${escapeHtml(getLockedQuizMessage())}"` : ''
+              } data-confirm="Bạn có chắc muốn xoá bài học #${lesson.id} không? Quiz/tiến độ liên quan cũng sẽ bị xoá.">Xoá</button>`;
+
+            return (
+              `<tr data-lesson-id="${lesson.id}"` +
+              ` data-title="${escapeHtml(lesson.title || '')}"` +
+              ` data-content-url="${escapeHtml(rawUrl)}"` +
+              ` data-order-index="${Number(lesson.orderIndex) || 1}"` +
+              ` data-duration="${Number(lesson.duration) || 15}"` +
+              ` data-kind="${escapeHtml(kind)}"` +
+              ` data-quiz-id="${Number(lesson.quizId) || 0}"` +
+              ` data-quiz-locked="${quizLocked ? '1' : '0'}">` +
+              `<td>${lesson.orderIndex}</td>` +
+              `<td>${escapeHtml(lesson.title)}${
+                isQuizLesson
+                  ? `<div class="muted" style="margin-top:0.25rem;font-size:0.78rem">Bài kiểm tra${
+                      quizLocked ? ' • Đã có kết quả làm bài' : ''
+                    }</div>`
+                  : ''
+              }</td>` +
+              `<td>${lesson.duration}</td>` +
+              `<td>${isQuizLesson ? '<span class="muted">—</span>' : `<code style="font-size:0.75rem">${escapeHtml(shortUrl || '—')}</code>`}</td>` +
+              `<td><div class="row" style="justify-content:flex-end;gap:0.4rem">${actionCell}</div></td>` +
+              `</tr>`
+            );
           })
           .join('') +
         `</tbody></table></div>`;
+
+      if (!Number(adLessonEditId?.value || 0)) {
+        resetLessonForm(currentLessonsCourseId);
+      }
     } catch (e) {
+      lastCourseLessons = [];
       adLessonsList.innerHTML = '<p class="muted">' + escapeHtml(e.message) + '</p>';
     }
   }
@@ -422,18 +541,17 @@
     adLessonsModal.classList.add('hidden');
     adLessonsModal.setAttribute('aria-hidden', 'true');
     document.removeEventListener('keydown', escLessonsModal);
+    resetLessonForm(currentLessonsCourseId);
   }
 
   function openLessonsModal(courseId) {
     if (!adLessonsModal) return;
-    const hid = root.querySelector('#adLessonsCourseId');
-    const title = root.querySelector('#adLessonsModalTitle');
-    if (hid) hid.value = String(courseId);
-    if (title) title.textContent = `Bài học — khóa #${courseId}`;
+    currentLessonsCourseId = Number(courseId) || 0;
     adLessonsModal.classList.remove('hidden');
     adLessonsModal.setAttribute('aria-hidden', 'false');
     document.addEventListener('keydown', escLessonsModal);
-    loadLessonsForCourse(courseId);
+    resetLessonForm(currentLessonsCourseId);
+    loadLessonsForCourse(currentLessonsCourseId);
   }
 
   adCat.addEventListener('click', async (ev) => {
@@ -464,31 +582,124 @@
     if (el) el.addEventListener('click', closeLessonsModal);
   });
 
+  adLessonsList?.addEventListener('click', async (ev) => {
+    const target = ev.target.closest('[data-action]');
+    if (!target) return;
+    const row = target.closest('tr[data-lesson-id]');
+    if (!row) return;
+    const lessonId = Number(row.dataset.lessonId);
+    if (!lessonId) return;
+    const action = target.dataset.action;
+
+    if (action === 'open-quiz-questions') {
+      ev.preventDefault();
+      if (row.dataset.quizLocked === '1') {
+        showAppAlert(getLockedQuizMessage(), 'error');
+        return;
+      }
+      const quizId = Number(row.dataset.quizId);
+      if (!quizId) {
+        showAppAlert('Bài kiểm tra này chưa có quiz.', 'error');
+        return;
+      }
+      window.location.href = `admin/quiz-edit.html?quizId=${encodeURIComponent(String(quizId))}&courseId=${encodeURIComponent(
+        String(currentLessonsCourseId)
+      )}`;
+      return;
+    }
+
+    if (action === 'lesson-delete') {
+      ev.preventDefault();
+      if (row.dataset.quizLocked === '1') {
+        showAppAlert(getLockedQuizMessage(), 'error');
+        return;
+      }
+      showAppAlert('');
+      try {
+        await request(`courses/${currentLessonsCourseId}/lessons/${lessonId}`, { method: 'DELETE' });
+        showAppAlert('Đã xoá bài học.', 'ok');
+        resetLessonForm(currentLessonsCourseId);
+        await loadAdminCatalog();
+        await loadLessonsForCourse(currentLessonsCourseId);
+      } catch (err) {
+        showAppAlert(err.message, 'error');
+      }
+      return;
+    }
+
+    if (action === 'lesson-edit') {
+      ev.preventDefault();
+      fillLessonFormForEdit(row);
+    }
+  });
+
+  if (adLessonKind) {
+    adLessonKind.addEventListener('change', () => setLessonKindUi(adLessonKind.value, false));
+  }
+
   if (adLessonForm) {
     adLessonForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       showAppAlert('');
       const fd = new FormData(adLessonForm);
-      const courseId = Number(fd.get('courseId'));
+      const courseId = Number(fd.get('courseId')) || currentLessonsCourseId;
       if (!courseId) return;
-      const body = {
-        title: fd.get('title'),
-        contentUrl: fd.get('contentUrl'),
-        orderIndex: Number(fd.get('orderIndex')),
-        duration: Number(fd.get('duration')),
-      };
+      const editingId = Number(fd.get('lessonId') || 0);
+      const kind = String(fd.get('kind') || 'lesson').trim().toLowerCase();
       try {
-        await request(`courses/${courseId}/lessons`, { method: 'POST', body });
-        showAppAlert('Đã thêm bài học.', 'ok');
-        adLessonForm.querySelector('[name="title"]').value = '';
-        adLessonForm.querySelector('[name="contentUrl"]').value = '';
-        await loadLessonsForCourse(courseId);
+        if (editingId) {
+          const body = {
+            title: String(fd.get('title') || '').trim(),
+            contentUrl: String(fd.get('contentUrl') || '').trim(),
+            orderIndex: Number(fd.get('orderIndex')),
+            duration: Number(fd.get('duration')),
+          };
+          await request(`courses/${courseId}/lessons/${editingId}`, { method: 'PUT', body });
+          showAppAlert('Đã cập nhật bài học.', 'ok');
+        } else if (kind === 'quiz') {
+          const quizTitle = String(fd.get('quizTitle') || '').trim();
+          if (!quizTitle) {
+            showAppAlert('Vui lòng nhập tên bài kiểm tra.', 'error');
+            return;
+          }
+          await request(`courses/${courseId}/lessons`, {
+            method: 'POST',
+            body: {
+              title: quizTitle,
+              kind: 'QUIZ',
+              contentUrl: '',
+              duration: Number(fd.get('duration') || 15),
+              orderIndex: Number(fd.get('orderIndex')),
+            },
+          });
+          showAppAlert('Đã tạo bài kiểm tra. Chọn "Soạn câu hỏi" để nhập câu hỏi.', 'ok');
+        } else {
+          const body = {
+            title: String(fd.get('title') || '').trim(),
+            contentUrl: String(fd.get('contentUrl') || '').trim(),
+            orderIndex: Number(fd.get('orderIndex')),
+            duration: Number(fd.get('duration')),
+          };
+          await request(`courses/${courseId}/lessons`, { method: 'POST', body });
+          showAppAlert('Đã thêm bài học.', 'ok');
+        }
+        resetLessonForm(courseId);
         await loadAdminCatalog();
+        await loadLessonsForCourse(courseId);
       } catch (err) {
         showAppAlert(err.message, 'error');
       }
     });
   }
+
+  adLessonCancelBtn?.addEventListener('click', (ev) => {
+    ev.preventDefault();
+    if (Number(adLessonEditId?.value || 0)) {
+      resetLessonForm(currentLessonsCourseId);
+      return;
+    }
+    closeLessonsModal();
+  });
 
   root.querySelector('#adBtnOpenCreate').addEventListener('click', () => {
     const form = root.querySelector('#adCourse');

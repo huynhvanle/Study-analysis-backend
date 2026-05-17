@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/app.css?v=45" />
+  <link rel="stylesheet" href="css/app.css?v=55" />
 </head>
 <body class="landing-body" data-app-shell="study-landing">
   <div class="landing-page" id="landingRoot">
@@ -65,7 +65,7 @@
                 </div>
                 <div class="student-dropdown-sep" role="separator"></div>
                 <p class="student-dropdown-section-label">Thông tin</p>
-                <a href="student/student.html" role="menuitem" class="student-dropdown-item">Hồ sơ &amp; học tập</a>
+                <a href="student/student.html?view=student-history" role="menuitem" class="student-dropdown-item">Lịch sử học tập</a>
                 <div class="student-dropdown-sep" role="separator"></div>
                 <button type="button" role="menuitem" class="student-dropdown-item student-dropdown-item--danger js-logout">Đăng xuất</button>
               </div>
@@ -77,9 +77,9 @@
 
     <div id="landingGuestMarketing">
     <main class="landing-main-full">
-      <section class="landing-hero-dual" aria-label="Ưu đãi">
+      <section class="landing-hero-dual" id="landingPlusHero" aria-label="Ưu đãi">
         <div class="landing-inner landing-hero-grid">
-          <article class="landing-banner landing-banner--plus">
+          <article class="landing-banner landing-banner--plus" id="landingPlusBanner">
             <span class="landing-banner-badge">Ưu đãi</span>
             <h2 class="landing-banner-title">Gói StudyHub Plus</h2>
             <a href="index.html?auth=1&amp;tab=register" class="btn btn-primary landing-banner-cta" id="landingCtaPrimary">Bắt đầu miễn phí →</a>
@@ -205,7 +205,7 @@
         </div>
         <div class="landing-footer-links">
           <a href="index.html">Trang giới thiệu</a>
-          <a href="student/student.html">Học tập (ứng dụng)</a>
+          <a href="student/my-learning.html">Lớp của tôi</a>
           <a href="index.html?auth=1">Đăng nhập tài khoản khác</a>
         </div>
       </div>
@@ -274,7 +274,7 @@
     </div>
   </div>
 
-  <script src="js/landing.js?v=40"></script>
-  <script src="js/app.js?v=46"></script>
+  <script src="js/landing.js?v=41"></script>
+  <script src="js/app.js?v=53"></script>
 </body>
 </html>

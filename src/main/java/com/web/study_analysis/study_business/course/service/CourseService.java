@@ -18,6 +18,7 @@ import com.web.study_analysis.study_business.lesson.repository.LessonRepository;
 import com.web.study_analysis.study_business.progress.repository.ProgressRepository;
 import com.web.study_analysis.study_business.quiz.entity.Quiz;
 import com.web.study_analysis.study_business.quiz.repository.QuizRepository;
+import com.web.study_analysis.study_business.quiz.repository.QuizResultAnswerRepository;
 import com.web.study_analysis.study_business.quiz.repository.QuizResultRepository;
 import com.web.study_analysis.study_business.studylog.repository.StudyLogRepository;
 import com.web.study_analysis.user.repository.UserRepository;
@@ -41,6 +42,7 @@ public class CourseService {
     ProgressRepository progressRepository;
     StudyLogRepository studyLogRepository;
     QuizRepository quizRepository;
+    QuizResultAnswerRepository quizResultAnswerRepository;
     QuizResultRepository quizResultRepository;
     UserRepository userRepository;
 
@@ -195,6 +197,7 @@ public class CourseService {
                     .map(Quiz::getId)
                     .collect(Collectors.toList());
             if (!quizIds.isEmpty()) {
+                quizResultAnswerRepository.deleteByQuizResult_Quiz_IdIn(quizIds);
                 quizResultRepository.deleteByQuiz_IdIn(quizIds);
             }
             progressRepository.deleteByLesson_IdIn(lessonIds);

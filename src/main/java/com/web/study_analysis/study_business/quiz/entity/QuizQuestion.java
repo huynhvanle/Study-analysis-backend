@@ -26,6 +26,9 @@ public class QuizQuestion {
     @Column(nullable = false, length = 1000)
     String prompt;
 
+    @Column(length = 2000)
+    String explanation;
+
     @Column(name = "order_index", nullable = false)
     Integer orderIndex;
 

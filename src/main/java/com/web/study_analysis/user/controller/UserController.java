@@ -3,6 +3,7 @@ package com.web.study_analysis.user.controller;
 import com.web.study_analysis.user.dto.reponse.UserReponse;
 import com.web.study_analysis.user.dto.request.UserUpdateRequest;
 import com.web.study_analysis.user.service.UserService;
+import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -28,8 +29,13 @@ public class UserController {
     }
 
     @PutMapping("/{userId}")
-    public UserReponse updateUser(@PathVariable Long userId, @RequestBody UserUpdateRequest userUpdateRequest) {
+    public UserReponse updateUser(@PathVariable Long userId, @Valid @RequestBody UserUpdateRequest userUpdateRequest) {
         return userService.updateUser(userId, userUpdateRequest);
+    }
+
+    @PostMapping("/{userId}/plus-upgrade-request")
+    public UserReponse requestPlusUpgrade(@PathVariable Long userId) {
+        return userService.requestPlusUpgrade(userId);
     }
 
     @DeleteMapping("/{userId}")

@@ -2,6 +2,7 @@ package com.web.study_analysis.user.dto.reponse;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.web.study_analysis.study_business.tier.SubscriptionTier;
+import com.web.study_analysis.user.entity.UserStatus;
 import lombok.Builder;
 import lombok.Data;
 
@@ -18,5 +19,9 @@ public class UserReponse {
     private String email;
     /** FREE / PLUS */
     private SubscriptionTier plan;
+    /** ACTIVE / INACTIVE */
+    private UserStatus status;
+    /** Learner requested manual upgrade to Plus. */
+    private Boolean plusUpgradeRequested;
     private LocalDateTime createdAt;
 }

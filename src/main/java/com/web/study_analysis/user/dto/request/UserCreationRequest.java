@@ -1,5 +1,6 @@
 package com.web.study_analysis.user.dto.request;
 
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
@@ -16,6 +17,8 @@ public class UserCreationRequest {
 
     private String name;
 
-    /** Optional; normalized and validated when present */
+    /** Required; normalized to lowercase in service */
+    @NotBlank(message = "EMAIL_REQUIRED")
+    @Size(max = 255, message = "INVALID_EMAIL")
     private String email;
 }

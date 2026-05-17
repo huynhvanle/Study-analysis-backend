@@ -6,6 +6,8 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(
@@ -35,6 +37,10 @@ public class QuizResult {
 
     @Column(name = "submitted_at", nullable = false)
     LocalDateTime submittedAt;
+
+    @OneToMany(mappedBy = "quizResult", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    List<QuizResultAnswer> answers = new ArrayList<>();
 
     @PrePersist
     void prePersist() {

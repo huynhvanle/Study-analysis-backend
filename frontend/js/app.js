@@ -13,6 +13,7 @@
     email: null,
     /** "FREE" | "PLUS" */
     plan: null,
+    plusRequested: false,
   };
 
   let activeView = '';
@@ -171,6 +172,7 @@
       state.name = s.name || null;
       state.email = s.email || null;
       state.plan = s.plan || 'FREE';
+      state.plusRequested = !!s.plusRequested;
     } catch {
       localStorage.removeItem(STORAGE_KEY);
     }
@@ -187,12 +189,14 @@
         name: state.name,
         email: state.email,
         plan: state.plan || 'FREE',
+        plusRequested: !!state.plusRequested,
       })
     );
   }
 
   function clearSession() {
     state.token = state.userId = state.username = state.role = state.name = state.email = state.plan = null;
+    state.plusRequested = false;
     localStorage.removeItem(STORAGE_KEY);
   }
 
@@ -235,7 +239,31 @@
     state.name = r.name || null;
     state.email = r.email || null;
     state.plan = r.plan != null ? String(r.plan) : 'FREE';
+    state.plusRequested = !!r.plusUpgradeRequested;
     saveSession();
+  }
+
+  function mergeCurrentUserProfile(user) {
+    if (!user || typeof user !== 'object') return;
+    if (user.id != null) state.userId = user.id;
+    if (user.username != null) state.username = user.username || null;
+    if (user.role != null) state.role = user.role || null;
+    if (user.name !== undefined) state.name = user.name || null;
+    if (user.email !== undefined) state.email = user.email || null;
+    if (user.plan != null) state.plan = String(user.plan);
+    if (user.plusUpgradeRequested !== undefined) state.plusRequested = !!user.plusUpgradeRequested;
+    saveSession();
+  }
+
+  async function refreshCurrentUserProfile() {
+    if (!isAuthenticated() || state.userId == null) return;
+    try {
+      const user = await request(`users/${state.userId}`, { method: 'GET' });
+      mergeCurrentUserProfile(user);
+      updateTopbar();
+    } catch {
+      /* ignore */
+    }
   }
 
   function showGateAlert(msg, type) {
@@ -254,6 +282,10 @@
 
   function showAppAlert(msg, type) {
     const el = document.getElementById('alert');
+    if (!el) {
+      if (msg) window.alert(String(msg));
+      return;
+    }
     if (!msg) {
       el.hidden = true;
       el.textContent = '';
@@ -272,6 +304,147 @@
     const showStudent = isAuthenticated() && !isStaff();
     guest.hidden = showStudent;
     stud.hidden = !showStudent;
+  }
+
+  function hideStudentUserMenus() {
+    ['studentUserDropdown', 'landingUserDropdown'].forEach((id) => {
+      const menu = document.getElementById(id);
+      if (menu) menu.classList.add('hidden');
+    });
+    ['studentUserMenuBtn', 'landingUserMenuBtn'].forEach((id) => {
+      const btn = document.getElementById(id);
+      if (btn) btn.setAttribute('aria-expanded', 'false');
+    });
+  }
+
+  function syncPlanBadge(roleBadgeEl) {
+    if (!roleBadgeEl || !roleBadgeEl.parentElement) return;
+    let badge = roleBadgeEl.parentElement.querySelector('.student-plan-pill');
+    const isPlus = String(state.plan || 'FREE').toUpperCase() === 'PLUS';
+    if (!isPlus) {
+      if (badge) badge.remove();
+      return;
+    }
+    if (!badge) {
+      badge = document.createElement('span');
+      badge.className = 'student-plan-pill';
+      roleBadgeEl.insertAdjacentElement('afterend', badge);
+    }
+    badge.textContent = 'Plus';
+  }
+
+  function buildPlusRequestControl(menu) {
+    if (!menu) return;
+    menu.querySelectorAll('.student-plus-request-wrap, .student-plus-request-sep').forEach((el) => el.remove());
+
+    const isStudent = normalizeRole(state.role) === 'STUDENT';
+    const isPlus = String(state.plan || 'FREE').toUpperCase() === 'PLUS';
+    if (!isAuthenticated() || !isStudent || isPlus) return;
+
+    const wrap = document.createElement('div');
+    wrap.className = 'student-plus-request-wrap';
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.setAttribute('role', 'menuitem');
+    btn.className = 'student-dropdown-item student-dropdown-item--plus';
+    if (state.plusRequested) {
+      btn.disabled = true;
+      btn.textContent = 'Đã gửi yêu cầu nâng cấp Plus';
+      btn.title = 'Yêu cầu đang chờ quản trị viên phê duyệt.';
+    } else {
+      btn.textContent = 'Yêu cầu nâng cấp tài khoản Plus';
+      btn.dataset.action = 'request-plus-upgrade';
+    }
+    wrap.appendChild(btn);
+
+    const sep = document.createElement('div');
+    sep.className = 'student-dropdown-sep student-plus-request-sep';
+    sep.setAttribute('role', 'separator');
+
+    const logoutBtn = menu.querySelector('.js-logout');
+    const anchor = logoutBtn?.previousElementSibling && logoutBtn.previousElementSibling.classList.contains('student-dropdown-sep')
+      ? logoutBtn.previousElementSibling
+      : logoutBtn;
+    if (anchor) {
+      menu.insertBefore(sep, anchor);
+      menu.insertBefore(wrap, sep);
+    } else {
+      menu.appendChild(wrap);
+    }
+  }
+
+  function syncStudentUpgradeUi() {
+    syncPlanBadge(document.getElementById('roleBadge'));
+    syncPlanBadge(document.getElementById('landingRoleBadge'));
+    buildPlusRequestControl(document.getElementById('studentUserDropdown'));
+    buildPlusRequestControl(document.getElementById('landingUserDropdown'));
+    syncLandingPlusBanner();
+  }
+
+  /** Banner xanh Plus trên study-landing: ẩn nếu đã Plus; FREE thì bấm = yêu cầu nâng cấp. */
+  function syncLandingPlusBanner() {
+    if (document.body.dataset.appShell !== 'study-landing') return;
+
+    const hero = document.getElementById('landingPlusHero');
+    const banner = document.getElementById('landingPlusBanner');
+    const cta = document.getElementById('landingCtaPrimary');
+    if (!hero || !banner) return;
+
+    const isStudent = normalizeRole(state.role) === 'STUDENT';
+    const isPlus = String(state.plan || 'FREE').toUpperCase() === 'PLUS';
+
+    if (!isAuthenticated() || !isStudent || isPlus) {
+      hero.hidden = isAuthenticated() && isStudent && isPlus;
+      banner.removeAttribute('data-action');
+      banner.classList.remove('landing-banner--clickable');
+      if (cta) {
+        cta.removeAttribute('data-action');
+        cta.classList.remove('is-disabled');
+      }
+      return;
+    }
+
+    hero.hidden = false;
+
+    if (state.plusRequested) {
+      banner.removeAttribute('data-action');
+      banner.classList.remove('landing-banner--clickable');
+      if (cta) {
+        cta.removeAttribute('data-action');
+        cta.textContent = 'Đã gửi yêu cầu nâng cấp Plus';
+        cta.href = '#';
+        cta.classList.add('is-disabled');
+        cta.setAttribute('aria-disabled', 'true');
+      }
+      return;
+    }
+
+    banner.dataset.action = 'request-plus-upgrade';
+    banner.classList.add('landing-banner--clickable');
+    if (cta) {
+      cta.dataset.action = 'request-plus-upgrade';
+      cta.textContent = 'Yêu cầu nâng cấp Plus →';
+      cta.href = '#';
+      cta.classList.remove('is-disabled');
+      cta.removeAttribute('aria-disabled');
+    }
+  }
+
+  async function submitPlusUpgradeRequest(triggerEl) {
+    if (!isAuthenticated() || state.userId == null) return;
+    if (String(state.plan || 'FREE').toUpperCase() === 'PLUS') return;
+    if (state.plusRequested) return;
+    if (triggerEl) triggerEl.disabled = true;
+    try {
+      const user = await request(`users/${state.userId}/plus-upgrade-request`, { method: 'POST' });
+      mergeCurrentUserProfile(user);
+      updateTopbar();
+      hideStudentUserMenus();
+      showAppAlert('Đã gửi yêu cầu nâng cấp tài khoản Plus. Quản trị viên sẽ phê duyệt sau.', 'ok');
+    } catch (err) {
+      if (triggerEl) triggerEl.disabled = false;
+      showAppAlert(gateErrorMessage(err), 'error');
+    }
   }
 
   function stripAuthQueryFromUrl() {
@@ -360,25 +533,29 @@
     if (document.body.dataset.appShell === 'student') {
       try {
         const sp = new URLSearchParams(window.location.search);
-        if (sp.get('view') === 'classroom') {
-          activeView = 'student-classroom';
+        const requestedView = sp.get('view');
+        if (requestedView && NAV.some((item) => item.id === requestedView && item.studentOnly)) {
+          activeView = requestedView;
         }
       } catch {
         /* ignore */
       }
     }
     if (!activeView || (NAV.find((n) => n.id === activeView)?.staffOnly && !isStaff())) {
-      activeView = isStaff() ? 'admin-home' : 'student-home';
+      activeView = isStaff() ? 'admin-home' : 'student-history';
     }
     const item = NAV.find((n) => n.id === activeView);
     if (item && ((item.staffOnly && !isStaff()) || (item.studentOnly && isStaff() && !item.allowStaff))) {
-      activeView = isStaff() ? 'admin-home' : 'student-home';
+      activeView = isStaff() ? 'admin-home' : 'student-history';
+    }
+    if (!isStaff() && activeView === 'student-home') {
+      activeView = 'student-history';
     }
     showView(activeView);
     if (document.body.dataset.appShell === 'student') {
       try {
         const u = new URL(window.location.href);
-        if (u.searchParams.get('view') === 'classroom') {
+        if (u.searchParams.get('view')) {
           u.searchParams.delete('view');
           const qs = u.searchParams.toString();
           window.history.replaceState({}, '', u.pathname + (qs ? `?${qs}` : '') + u.hash);
@@ -437,6 +614,7 @@
       lrb.className = 'role-badge ' + (isStaff() ? 'staff' : 'student');
     }
     syncLandingNavForSession();
+    syncStudentUpgradeUi();
   }
 
   /**
@@ -444,7 +622,6 @@
    * studentOnly: primary learner tools (staff can open if allowStaff)
    */
   const NAV = [
-    { id: 'student-home', label: 'Tổng quan', icon: '', desc: 'Tóm tắt học tập và số liệu nhanh.', studentOnly: true, allowStaff: true },
     {
       id: 'student-classroom',
       label: 'Lớp của tôi',
@@ -453,9 +630,17 @@
       studentOnly: true,
       allowStaff: true,
     },
-    { id: 'admin-home', label: 'Tổng quan', icon: '', desc: 'Thống kê nhanh nền tảng.', staffOnly: true },
-    { id: 'admin-members', label: 'Thành viên', icon: '', desc: 'Danh sách tài khoản người dùng.', staffOnly: true },
-    { id: 'admin-courses', label: 'Khóa học', icon: '', desc: 'Tạo, sửa, xuất bản khóa học; danh mục qua nút trên trang.', staffOnly: true },
+    {
+      id: 'student-history',
+      label: 'Lịch sử học tập',
+      icon: '',
+      desc: 'Xem lại các khóa học và bài học bạn đã tham gia.',
+      studentOnly: true,
+      allowStaff: true,
+    },
+    { id: 'admin-home', label: 'Thống kê', icon: '', desc: 'Thống kê nhanh nền tảng.', staffOnly: true },
+    { id: 'admin-members', label: 'Quản lí người dùng', icon: '', desc: 'Tra cứu và cập nhật tài khoản người dùng.', staffOnly: true },
+    { id: 'admin-courses', label: 'Quản lí nội dung học tập', icon: '', desc: 'Tạo, sửa, xuất bản khóa học; danh mục qua nút trên trang.', staffOnly: true },
     { id: 'admin-content', label: 'Quiz & điểm', icon: '', desc: 'Tạo quiz và nhập điểm.', staffOnly: true },
   ];
 
@@ -492,7 +677,7 @@
     if (document.body.dataset.appShell === 'admin') {
       appendStaffNavLinks(nav);
       const back = document.createElement('a');
-      back.href = 'student/student.html';
+      back.href = 'student/my-learning.html';
       back.className = 'btn btn-ghost btn-sm';
       back.style.marginTop = '0.75rem';
       back.style.display = 'block';
@@ -573,7 +758,7 @@
   function requireStaff() {
     if (!isStaff()) {
       showAppAlert('Khu vực này chỉ dành cho nhân sự (vai trò Quản trị hoặc Giảng viên).', 'error');
-      showView('student-home');
+      window.location.href = 'student/my-learning.html';
       return false;
     }
     return true;
@@ -592,11 +777,11 @@
     setPage(item.label, item.desc);
     const content = document.getElementById('content');
     switch (id) {
-      case 'student-home':
-        renderStudentHome(content);
-        break;
       case 'student-classroom':
         renderStudentClassroom(content);
+        break;
+      case 'student-history':
+        renderStudentHistory(content);
         break;
       case 'admin-home':
         if (!requireStaff()) return;
@@ -1100,6 +1285,162 @@
     await load();
   }
 
+  async function renderStudentHistory(content) {
+    content.replaceChildren();
+    const shell = el(`
+      <div>
+        <div class="card">
+          <div class="row" style="justify-content:space-between; align-items:flex-start; gap:0.75rem; flex-wrap:wrap">
+            <div>
+              <h2 style="margin:0">Lịch sử học tập</h2>
+              <p class="muted" style="margin:0.45rem 0 0">Xem lại các khóa học đã ghi danh và những bài học bạn đã tham gia.</p>
+            </div>
+            <button type="button" class="btn btn-ghost" id="studentHistoryReload">Tải lại</button>
+          </div>
+        </div>
+        <div id="studentHistorySummary" class="stat-grid" style="margin-top:1rem"></div>
+        <div id="studentHistoryList" style="margin-top:1rem"></div>
+      </div>
+    `);
+    content.appendChild(shell);
+
+    const summaryEl = content.querySelector('#studentHistorySummary');
+    const listEl = content.querySelector('#studentHistoryList');
+
+    function formatDateTime(value) {
+      if (!value) return '—';
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return '—';
+      return date.toLocaleString('vi-VN');
+    }
+
+    function lessonStatusText(lesson) {
+      if (lesson.completed) return 'Đã hoàn thành';
+      if (lesson.latestQuizScore != null) return 'Đã làm quiz';
+      if (lesson.totalStudyMinutes > 0 || lesson.studySessions > 0) return 'Đã học';
+      return 'Đã tham gia';
+    }
+
+    function renderSummary(items) {
+      const courses = items.length;
+      const completedCourses = items.filter((course) => course.completed).length;
+      const lessons = items.reduce((sum, course) => sum + (Number(course.participatedLessons) || 0), 0);
+      if (summaryEl) {
+        summaryEl.innerHTML = `
+          <div class="stat"><div class="stat-value">${courses}</div><div class="stat-label">Khóa đã ghi danh</div></div>
+          <div class="stat"><div class="stat-value">${completedCourses}</div><div class="stat-label">Khóa đã hoàn thành</div></div>
+          <div class="stat"><div class="stat-value">${lessons}</div><div class="stat-label">Bài học đã tham gia</div></div>
+        `;
+      }
+    }
+
+    function renderCourse(course) {
+      const totalLessons = Math.max(0, Number(course.totalLessons) || 0);
+      const completedLessons = Math.max(0, Math.min(totalLessons, Number(course.completedLessons) || 0));
+      const participatedLessons = Math.max(0, Number(course.participatedLessons) || 0);
+      const progressPct = totalLessons > 0 ? Math.round((completedLessons * 100) / totalLessons) : 0;
+      const meta = [course.category || '', course.level || ''].filter(Boolean).join(' · ');
+      const lessons = Array.isArray(course.lessons) ? course.lessons : [];
+      const lessonsHtml = lessons.length
+        ? `<div class="table-wrap" style="margin-top:0.9rem">
+            <table>
+              <thead>
+                <tr>
+                  <th>Bài học</th>
+                  <th>Hoạt động gần nhất</th>
+                  <th>Hoàn thành</th>
+                  <th>Phút học</th>
+                  <th>Quiz</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${lessons
+                  .map(
+                    (lesson) => `<tr>
+                      <td>
+                        <div style="font-weight:650">${escapeHtml(lesson.orderIndex ?? '—')}. ${escapeHtml(lesson.title || '')}</div>
+                        <div class="muted" style="margin-top:0.2rem; font-size:0.8rem">${escapeHtml(lesson.kind || 'VIDEO')} · ${escapeHtml(
+                          lessonStatusText(lesson)
+                        )}</div>
+                      </td>
+                      <td>${escapeHtml(formatDateTime(lesson.lastActivityAt))}</td>
+                      <td>${lesson.completed ? escapeHtml(formatDateTime(lesson.completedAt)) : '—'}</td>
+                      <td>${lesson.totalStudyMinutes ? `${escapeHtml(lesson.totalStudyMinutes)} phút / ${escapeHtml(lesson.studySessions || 0)} phiên` : '—'}</td>
+                      <td>${
+                        lesson.latestQuizScore != null ? `${Number(lesson.latestQuizScore).toFixed(1)} / 100` : '—'
+                      }</td>
+                    </tr>`
+                  )
+                  .join('')}
+              </tbody>
+            </table>
+          </div>`
+        : '<p class="muted" style="margin:0.9rem 0 0">Bạn mới ghi danh khóa này, chưa có bài học nào được học hoặc hoàn thành.</p>';
+
+      return `
+        <section class="card" style="margin-bottom:1rem">
+          <div class="row" style="justify-content:space-between; align-items:flex-start; gap:0.85rem; flex-wrap:wrap">
+            <div style="min-width:16rem; flex:1">
+              <h3 style="margin:0">${escapeHtml(course.courseTitle || 'Khóa học')}</h3>
+              <p class="muted" style="margin:0.35rem 0 0">${escapeHtml(meta || '—')}</p>
+              <p style="margin:0.65rem 0 0; font-size:0.92rem">
+                Ghi danh lúc <strong>${escapeHtml(formatDateTime(course.enrolledAt))}</strong>
+                ${course.lastActivityAt ? ` · Hoạt động gần nhất <strong>${escapeHtml(formatDateTime(course.lastActivityAt))}</strong>` : ''}
+              </p>
+              ${
+                course.completed && course.completedAt
+                  ? `<p style="margin:0.4rem 0 0; font-size:0.9rem"><strong>Hoàn thành khóa:</strong> ${escapeHtml(formatDateTime(course.completedAt))}</p>`
+                  : ''
+              }
+            </div>
+            <div class="row" style="gap:0.5rem; justify-content:flex-end">
+              <a class="btn btn-primary btn-sm" href="student/learn.html?courseId=${encodeURIComponent(String(course.courseId))}">Mở khóa học</a>
+            </div>
+          </div>
+          <div style="margin-top:0.85rem">
+            <div class="row" style="justify-content:space-between; align-items:center; gap:0.75rem; flex-wrap:wrap">
+              <div class="muted" style="font-size:0.88rem">Tiến độ hoàn thành: <strong>${completedLessons}</strong> / ${totalLessons} bài (${progressPct}%)</div>
+              <div class="muted" style="font-size:0.88rem">Đã tham gia: <strong>${participatedLessons}</strong> bài</div>
+            </div>
+            ${
+              totalLessons > 0
+                ? `<div style="height:10px; border-radius:999px; background:#e2e8f0; overflow:hidden; margin-top:0.55rem"><span style="display:block; height:100%; width:${progressPct}%; background:linear-gradient(90deg, #38bdf8 0%, #22c55e 100%)"></span></div>`
+                : ''
+            }
+          </div>
+          ${lessonsHtml}
+        </section>
+      `;
+    }
+
+    async function loadHistory() {
+      if (listEl) listEl.innerHTML = '<div class="card"><p class="muted">Đang tải lịch sử học tập…</p></div>';
+      try {
+        const items = await request(`learning/users/${state.userId}/history`, { method: 'GET' });
+        const list = Array.isArray(items) ? items : [];
+        renderSummary(list);
+        if (!list.length) {
+          if (listEl) {
+            listEl.innerHTML =
+              '<div class="card"><p class="muted">Bạn chưa có lịch sử học tập nào. Hãy ghi danh và bắt đầu học để hệ thống lưu lại quá trình học.</p></div>';
+          }
+          return;
+        }
+        if (listEl) {
+          listEl.innerHTML = list.map((course) => renderCourse(course)).join('');
+        }
+      } catch (err) {
+        if (summaryEl) summaryEl.innerHTML = '';
+        if (listEl) {
+          listEl.innerHTML = `<div class="card"><p class="muted">${escapeHtml(err.message)}</p></div>`;
+        }
+      }
+    }
+
+    content.querySelector('#studentHistoryReload')?.addEventListener('click', loadHistory);
+    await loadHistory();
+  }
+
   function renderStudentLearn(content) {
     content.replaceChildren();
     content.appendChild(
@@ -1331,34 +1672,266 @@
 
   /* ---------- Admin views ---------- */
 
-  async function renderAdminHome(content) {
-    content.replaceChildren();
-    content.appendChild(
-      el(`
-      <div>
-        <div class="stat-grid" id="admStats"></div>
+  const ADMIN_OVERVIEW_COLORS = ['#0b6bcb', '#7c3aed', '#ea580c', '#059669', '#e11d48', '#0891b2', '#f59e0b'];
+
+  function formatAdminOverviewCount(value) {
+    return new Intl.NumberFormat('vi-VN').format(Number(value) || 0);
+  }
+
+  function formatAdminOverviewPercent(value) {
+    const num = Number(value);
+    return `${Number.isFinite(num) ? num.toFixed(1) : '0.0'}%`;
+  }
+
+  function buildAdminOverviewLineChart(points) {
+    const items = Array.isArray(points)
+      ? points.map((point) => ({
+          label: String(point?.label || ''),
+          value: Number(point?.value) || 0,
+        }))
+      : [];
+    if (!items.length) {
+      return '<p class="muted">Chưa có dữ liệu tăng trưởng người dùng.</p>';
+    }
+
+    const width = 620;
+    const height = 260;
+    const padLeft = 42;
+    const padRight = 18;
+    const padTop = 18;
+    const padBottom = 42;
+    const plotWidth = width - padLeft - padRight;
+    const plotHeight = height - padTop - padBottom;
+    const maxValue = Math.max(...items.map((item) => item.value), 1);
+    const coords = items.map((item, index) => {
+      const x = items.length === 1 ? padLeft + plotWidth / 2 : padLeft + (plotWidth * index) / (items.length - 1);
+      const y = padTop + plotHeight - (item.value / maxValue) * plotHeight;
+      return { ...item, x, y };
+    });
+
+    const linePath = coords.map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x.toFixed(2)} ${point.y.toFixed(2)}`).join(' ');
+    const areaPath = [
+      `M ${coords[0].x.toFixed(2)} ${(padTop + plotHeight).toFixed(2)}`,
+      ...coords.map((point) => `L ${point.x.toFixed(2)} ${point.y.toFixed(2)}`),
+      `L ${coords[coords.length - 1].x.toFixed(2)} ${(padTop + plotHeight).toFixed(2)}`,
+      'Z',
+    ].join(' ');
+
+    const guides = Array.from({ length: 4 }, (_, index) => {
+      const ratio = index / 3;
+      const y = padTop + plotHeight * ratio;
+      const value = Math.round(maxValue * (1 - ratio));
+      return `
+        <line class="admin-line-grid" x1="${padLeft}" y1="${y.toFixed(2)}" x2="${(padLeft + plotWidth).toFixed(2)}" y2="${y.toFixed(2)}"></line>
+        <text class="admin-line-axis-label" x="${padLeft - 8}" y="${(y + 4).toFixed(2)}" text-anchor="end">${escapeHtml(formatAdminOverviewCount(value))}</text>
+      `;
+    }).join('');
+
+    const labels = coords.map((point) => `
+      <text class="admin-line-axis-label" x="${point.x.toFixed(2)}" y="${height - 12}" text-anchor="middle">${escapeHtml(point.label)}</text>
+      <text class="admin-line-point-label" x="${point.x.toFixed(2)}" y="${Math.max(point.y - 10, padTop + 12).toFixed(2)}" text-anchor="middle">${escapeHtml(formatAdminOverviewCount(point.value))}</text>
+    `).join('');
+
+    const pointsMarkup = coords.map((point) => `
+      <circle class="admin-line-point" cx="${point.x.toFixed(2)}" cy="${point.y.toFixed(2)}" r="5"></circle>
+    `).join('');
+
+    return `
+      <div class="admin-line-chart-wrap">
+        <svg class="admin-line-chart-svg" viewBox="0 0 ${width} ${height}" role="img" aria-label="Biểu đồ tăng trưởng người dùng theo tháng">
+          ${guides}
+          <path class="admin-line-fill" d="${areaPath}"></path>
+          <path class="admin-line-stroke" d="${linePath}"></path>
+          ${pointsMarkup}
+          ${labels}
+        </svg>
       </div>
-    `)
-    );
-    const grid = content.querySelector('#admStats');
-    let users = 0,
-      courses = 0;
-    try {
-      const u = await request('users', { method: 'GET' });
-      users = Array.isArray(u) ? u.length : 0;
-    } catch {
-      /* ignore */
-    }
-    try {
-      const c = await request('courses/management', { method: 'GET' });
-      courses = Array.isArray(c) ? c.length : 0;
-    } catch {
-      /* ignore */
-    }
-    grid.innerHTML = `
-      <div class="stat"><div class="stat-value">${users}</div><div class="stat-label">Tài khoản đã đăng ký</div></div>
-      <div class="stat"><div class="stat-value">${courses}</div><div class="stat-label">Khóa trong hệ thống</div></div>
     `;
+  }
+
+  function buildAdminOverviewPieChart(items) {
+    const rows = Array.isArray(items)
+      ? items
+          .map((item) => ({
+            label: String(item?.label || 'Chưa phân loại'),
+            value: Number(item?.value) || 0,
+          }))
+          .filter((item) => item.value > 0)
+      : [];
+    const total = rows.reduce((sum, item) => sum + item.value, 0);
+    if (!total) {
+      return '<p class="muted">Chưa có dữ liệu cơ cấu khóa học.</p>';
+    }
+
+    let angle = 0;
+    const gradient = rows
+      .map((item, index) => {
+        const start = angle;
+        angle += (item.value / total) * 360;
+        const color = ADMIN_OVERVIEW_COLORS[index % ADMIN_OVERVIEW_COLORS.length];
+        item.color = color;
+        return `${color} ${start.toFixed(2)}deg ${angle.toFixed(2)}deg`;
+      })
+      .join(', ');
+
+    return `
+      <div class="admin-pie-layout">
+        <div class="admin-donut-chart" style="background: conic-gradient(${gradient});">
+          <div class="admin-donut-center">
+            <strong>${escapeHtml(formatAdminOverviewCount(total))}</strong>
+            <span>khóa học</span>
+          </div>
+        </div>
+        <ul class="admin-donut-legend">
+          ${rows
+            .map(
+              (item) => `
+            <li class="admin-donut-legend-item">
+              <span class="admin-donut-swatch" style="background:${item.color}"></span>
+              <span class="admin-donut-label">${escapeHtml(item.label)}</span>
+              <strong>${escapeHtml(formatAdminOverviewCount(item.value))}</strong>
+            </li>
+          `
+            )
+            .join('')}
+        </ul>
+      </div>
+    `;
+  }
+
+  function buildAdminOverviewCourseTable(items, mode) {
+    const rows = Array.isArray(items) ? items : [];
+    if (!rows.length) {
+      return '<p class="muted">Chưa có dữ liệu để xếp hạng.</p>';
+    }
+
+    const head =
+      mode === 'completion'
+        ? '<tr><th>#</th><th>Khóa học</th><th>Danh mục</th><th>Tỷ lệ HT</th><th>Hoàn thành / Ghi danh</th></tr>'
+        : '<tr><th>#</th><th>Khóa học</th><th>Danh mục</th><th>Enrollment</th><th>Tỷ lệ HT</th></tr>';
+
+    const body = rows
+      .map((item, index) => {
+        const courseTitle = escapeHtml(item?.courseTitle || 'Khóa học');
+        const category = escapeHtml(item?.category || 'Chưa phân loại');
+        const completionRate = escapeHtml(formatAdminOverviewPercent(item?.completionRatePercent));
+        const enrollmentCount = escapeHtml(formatAdminOverviewCount(item?.enrollmentCount));
+        const completionPair = `${escapeHtml(formatAdminOverviewCount(item?.completedEnrollmentCount))} / ${enrollmentCount}`;
+        return mode === 'completion'
+          ? `
+            <tr>
+              <td>${index + 1}</td>
+              <td><strong>${courseTitle}</strong></td>
+              <td>${category}</td>
+              <td>${completionRate}</td>
+              <td>${completionPair}</td>
+            </tr>
+          `
+          : `
+            <tr>
+              <td>${index + 1}</td>
+              <td><strong>${courseTitle}</strong></td>
+              <td>${category}</td>
+              <td>${enrollmentCount}</td>
+              <td>${completionRate}</td>
+            </tr>
+          `;
+      })
+      .join('');
+
+    return `
+      <div class="table-wrap">
+        <table class="admin-overview-table">
+          <thead>${head}</thead>
+          <tbody>${body}</tbody>
+        </table>
+      </div>
+    `;
+  }
+
+  function buildAdminOverviewMarkup(summary) {
+    const totalUsers = formatAdminOverviewCount(summary?.totalUsers);
+    const totalCourses = formatAdminOverviewCount(summary?.totalCourses);
+    const pendingApprovalRequests = formatAdminOverviewCount(summary?.pendingApprovalRequests);
+    const totalEnrollments = formatAdminOverviewCount(summary?.totalEnrollments);
+    const completionRate = formatAdminOverviewPercent(summary?.courseCompletionRatePercent);
+
+    return `
+      <div class="admin-overview-stack">
+        <section class="stat-grid admin-overview-cards">
+          <div class="stat">
+            <div class="stat-value">${totalUsers}</div>
+            <div class="stat-label">Tổng User</div>
+            <div class="admin-overview-card-note">Số tài khoản đang tồn tại trong hệ thống.</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value">${totalCourses}</div>
+            <div class="stat-label">Tổng Khóa học</div>
+            <div class="admin-overview-card-note">Bao gồm tất cả khóa học đang được quản lý.</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value">${pendingApprovalRequests}</div>
+            <div class="stat-label">Yêu cầu chờ duyệt</div>
+            <div class="admin-overview-card-note">Yêu cầu nâng cấp Plus đang chờ admin xử lý.</div>
+          </div>
+        </section>
+
+        <section class="admin-overview-chart-grid">
+          <article class="card admin-insight-panel">
+            <div class="admin-insight-head">
+              <div>
+                <h2>Biểu đồ tăng trưởng người dùng</h2>
+                <p class="muted">Số tài khoản đăng ký mới theo tháng trong 6 tháng gần nhất.</p>
+              </div>
+            </div>
+            ${buildAdminOverviewLineChart(summary?.userGrowth)}
+          </article>
+
+          <article class="card admin-insight-panel">
+            <div class="admin-insight-head">
+              <div>
+                <h2>Biểu đồ cơ cấu khóa học</h2>
+                <p class="muted">Phân bổ số khóa học theo danh mục hiện có trên hệ thống.</p>
+              </div>
+            </div>
+            ${buildAdminOverviewPieChart(summary?.courseComposition)}
+          </article>
+        </section>
+
+        <section class="admin-overview-quality-grid">
+          <article class="card admin-insight-panel">
+            <div class="admin-insight-head">
+              <div>
+                <h2>Top 5 khóa học được quan tâm nhất</h2>
+                <p class="muted">Xếp theo số lượng enrollment để phản ánh sức hút nội dung.</p>
+              </div>
+              <div class="admin-insight-pill">${totalEnrollments} enrollment</div>
+            </div>
+            ${buildAdminOverviewCourseTable(summary?.topInterestedCourses, 'interest')}
+          </article>
+
+          <article class="card admin-insight-panel">
+            <div class="admin-insight-head">
+              <div>
+                <h2>Top khóa học hoàn thành cao</h2>
+                <p class="muted">Xếp theo tỷ lệ hoàn thành trên số lượt ghi danh của từng khóa.</p>
+              </div>
+              <div class="admin-insight-pill">${completionRate} hoàn thành chung</div>
+            </div>
+            ${buildAdminOverviewCourseTable(summary?.topCompletedCourses, 'completion')}
+          </article>
+        </section>
+      </div>
+    `;
+  }
+
+  async function renderAdminHome(content) {
+    try {
+      const summary = await request('admin/insights/overview', { method: 'GET' });
+      content.innerHTML = buildAdminOverviewMarkup(summary || {});
+    } catch (e) {
+      content.innerHTML = `<div class="card"><p class="muted">${escapeHtml(e.message)}</p></div>`;
+    }
   }
 
   async function renderAdminMembers(content) {
@@ -2190,6 +2763,45 @@
     });
   }
 
+  /** Menu avatar trên landing / explore / my-learning / course detail. */
+  function initLandingUserMenu() {
+    const sh = document.body.dataset.appShell;
+    if (
+      sh !== 'landing' &&
+      sh !== 'study-landing' &&
+      sh !== 'student-mylearning-full' &&
+      sh !== 'student-explore-full' &&
+      sh !== 'student-course-detail' &&
+      sh !== 'student-learn'
+    ) {
+      return;
+    }
+    const btn = document.getElementById('landingUserMenuBtn');
+    const menu = document.getElementById('landingUserDropdown');
+    const wrap = btn?.closest('.student-user-menu-wrap');
+    if (!btn || !menu || !wrap) return;
+
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const willOpen = menu.classList.contains('hidden');
+      menu.classList.toggle('hidden', !willOpen);
+      btn.setAttribute('aria-expanded', String(willOpen));
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!wrap.contains(e.target)) {
+        menu.classList.add('hidden');
+        btn.setAttribute('aria-expanded', 'false');
+      }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Escape') return;
+      menu.classList.add('hidden');
+      btn.setAttribute('aria-expanded', 'false');
+    });
+  }
+
   /* ---------- Gate & boot ---------- */
 
   function initGateTabs() {
@@ -2267,15 +2879,23 @@
         showGateAlert('Hai lần nhập mật khẩu không khớp.', 'error');
         return;
       }
+      if (!emailRaw) {
+        showGateAlert('Email là bắt buộc.', 'error');
+        return;
+      }
+      const emailInput = form.querySelector('[name="email"]');
+      if (emailInput && !emailInput.checkValidity()) {
+        showGateAlert('Email không đúng định dạng.', 'error');
+        return;
+      }
 
       const body = {
         username,
         password,
         name: nameRaw || null,
-        email: emailRaw || null,
+        email: emailRaw,
       };
       if (!body.name) delete body.name;
-      if (!body.email) delete body.email;
 
       setGateLoading(form, true);
       try {
@@ -2355,8 +2975,22 @@
     true
   );
 
+  document.addEventListener('click', async (e) => {
+    const el = eventToElementTarget(e);
+    if (!el || typeof el.closest !== 'function') return;
+    const btn = el.closest('[data-action="request-plus-upgrade"]');
+    if (!btn) return;
+    e.preventDefault();
+    e.stopPropagation();
+    await submitPlusUpgradeRequest(btn);
+  });
+
   loadSession();
   exposeRuntime();
+  initLandingUserMenu();
+  if (isAuthenticated()) {
+    refreshCurrentUserProfile();
+  }
 
   // Standalone student pages: runtime + auth; my-learning cần update thanh màu/avatar.
   if (SHELL === 'student-learn' || SHELL === 'student-mylearning-full') {
@@ -2365,10 +2999,8 @@
       window.location.replace('index.html?auth=1&next=' + next);
       return;
     }
-    if (SHELL === 'student-mylearning-full') {
-      updateTopbar();
-      syncLandingNavForSession();
-    }
+    updateTopbar();
+    syncLandingNavForSession();
     return;
   }
   if (SHELL === 'student-explore-full' || SHELL === 'student-course-detail') {
@@ -2424,6 +3056,16 @@
       const next = encodeURIComponent(pathUnderAppForNextParam());
       window.location.replace('index.html?auth=1&next=' + next);
     } else {
+      let view = '';
+      try {
+        view = new URLSearchParams(window.location.search).get('view') || '';
+      } catch {
+        /* ignore */
+      }
+      if (!view || view === 'student-home') {
+        window.location.replace('student/my-learning.html');
+        return;
+      }
       showAppShell();
     }
   } else if (studyLandingShell) {
@@ -2517,43 +3159,6 @@
         menu.classList.add('hidden');
         btn.setAttribute('aria-expanded', 'false');
       });
-    });
-  })();
-
-  (function initLandingUserMenu() {
-    const sh = document.body.dataset.appShell;
-    if (
-      sh !== 'landing' &&
-      sh !== 'study-landing' &&
-      sh !== 'student-mylearning-full' &&
-      sh !== 'student-explore-full' &&
-      sh !== 'student-course-detail'
-    ) {
-      return;
-    }
-    const btn = document.getElementById('landingUserMenuBtn');
-    const menu = document.getElementById('landingUserDropdown');
-    const wrap = btn?.closest('.student-user-menu-wrap');
-    if (!btn || !menu || !wrap) return;
-
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const willOpen = menu.classList.contains('hidden');
-      menu.classList.toggle('hidden', !willOpen);
-      btn.setAttribute('aria-expanded', String(willOpen));
-    });
-
-    document.addEventListener('click', (e) => {
-      if (!wrap.contains(e.target)) {
-        menu.classList.add('hidden');
-        btn.setAttribute('aria-expanded', 'false');
-      }
-    });
-
-    document.addEventListener('keydown', (e) => {
-      if (e.key !== 'Escape') return;
-      menu.classList.add('hidden');
-      btn.setAttribute('aria-expanded', 'false');
     });
   })();
 })();

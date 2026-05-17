@@ -12,6 +12,5 @@ public class StudyLogRequest {
     @NotNull
     private Integer timeSpent;
     private Float score;
-    @NotNull
     private Integer attempt;
 }

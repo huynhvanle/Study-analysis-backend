@@ -11,5 +11,7 @@ public interface StudyLogRepository extends JpaRepository<StudyLog, Long> {
 
     List<StudyLog> findByUser_IdAndLesson_Id(Long userId, Long lessonId);
 
+    long countByUser_IdAndLesson_Id(Long userId, Long lessonId);
+
     long deleteByLesson_IdIn(Collection<Long> lessonIds);
 }

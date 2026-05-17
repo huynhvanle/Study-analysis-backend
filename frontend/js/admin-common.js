@@ -178,9 +178,9 @@
     if (!nav) return;
     nav.replaceChildren();
     const items = [
-      { id: 'home', href: 'admin.html', label: 'Tổng quan', icon: '' },
-      { id: 'members', href: 'admin/members.html', label: 'Thành viên', icon: '' },
-      { id: 'courses', href: 'admin/courses.html', label: 'Khóa học', icon: '' },
+      { id: 'home', href: 'admin.html', label: 'Thống kê', icon: '' },
+      { id: 'members', href: 'admin/members.html', label: 'Quản lí người dùng', icon: '' },
+      { id: 'courses', href: 'admin/courses.html', label: 'Quản lí nội dung học tập', icon: '' },
     ];
     items.forEach((item) => {
       const a = document.createElement('a');
@@ -192,7 +192,7 @@
       nav.appendChild(a);
     });
     const back = document.createElement('a');
-    back.href = 'student/student.html';
+    back.href = 'student/my-learning.html';
     back.className = 'btn btn-ghost btn-sm';
     back.style.marginTop = '0.75rem';
     back.style.display = 'block';

@@ -20,6 +20,9 @@ spring:
     url: "jdbc:mysql://localhost:3306/identity_service"
     username: root
     password: Huynh201200
+  sql:
+    init:
+      mode: always
   jpa: #tự thay đổi trong db
     hibernate:
       ddl-auto: update
